@@ -1,0 +1,34 @@
+@use '../../sales/sale-receipt/sale-receipt.scss';
+
+.action-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.action-bar button {
+  border: 1px solid #d9d9d9;
+  background: #fff;
+  border-radius: 6px;
+  padding: 0.5rem 0.85rem;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.action-bar button.primary {
+  background: linear-gradient(90deg, #1dc7ea, #1f77d0);
+  color: #fff;
+  border: none;
+}
+
+.action-bar button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.status-banner {
+  margin: 0 0 0.75rem;
+  font-weight: 700;
+}

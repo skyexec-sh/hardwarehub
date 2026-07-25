@@ -1,0 +1,71 @@
+<div class="header">
+  <p class="page-subtitle" style="margin:0">
+    Fulfillment invoices from delivered sales orders. Credit invoices support partial payments.
+  </p>
+</div>
+
+<div class="hh-panel table-panel">
+  <div class="filters-toolbar">
+    <button type="button" class="clear-filters" (click)="clearFilters()">Clear filters</button>
+  </div>
+
+  @if (error()) {
+    <p class="error">{{ error() }}</p>
+  }
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Invoice #</th>
+          <th>SO #</th>
+          <th>Customer</th>
+          <th>Status</th>
+          <th>Payment</th>
+          <th>Total</th>
+          <th>Due</th>
+          <th>Invoiced</th>
+          <th>Actions</th>
+        </tr>
+        <tr class="col-filters">
+          <th><input [formControl]="search" placeholder="Search invoice or customer" /></th>
+          <th></th>
+          <th></th>
+          <th>
+            <select [formControl]="status">
+              <option value="">All</option>
+              <option value="OPEN">Open</option>
+              <option value="PARTIALLY_PAID">Partially paid</option>
+              <option value="PAID">Paid</option>
+              <option value="VOIDED">Voided</option>
+            </select>
+          </th>
+          <th></th>
+          <th></th>
+          <th></th>
+          <th></th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (item of items(); track item.id) {
+          <tr>
+            <td>{{ item.invoiceNumber }}</td>
+            <td>{{ item.soNumber }}</td>
+            <td>{{ item.customerName }}</td>
+            <td><span class="status-chip" [class]="statusClass(item.status)">{{ statusLabel(item.status) }}</span></td>
+            <td>{{ item.paymentMethod }}</td>
+            <td>{{ item.totalAmount | currency: 'PHP':'symbol-narrow':'1.2-2' }}</td>
+            <td>{{ item.amountDue | currency: 'PHP':'symbol-narrow':'1.2-2' }}</td>
+            <td>{{ item.invoicedAt | date: 'medium' }}</td>
+            <td class="actions">
+              <a [routerLink]="['/fulfillment/invoices', item.id]">View</a>
+            </td>
+          </tr>
+        } @empty {
+          <tr><td colspan="9" class="empty">No invoices match these filters</td></tr>
+        }
+      </tbody>
+    </table>
+  </div>
+</div>

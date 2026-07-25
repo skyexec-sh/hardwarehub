@@ -1,0 +1,156 @@
+.toolbar {
+  display: flex;
+  gap: 0.65rem;
+  margin-bottom: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.ghost {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.55rem 0.9rem;
+  border-radius: 6px;
+  background: #f3f3f3;
+  color: #444;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.error {
+  color: #c0392b;
+}
+
+.meta-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 0.75rem 1.25rem;
+  margin-bottom: 1rem;
+}
+
+.meta-grid .label {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  color: var(--hh-muted);
+  letter-spacing: 0.04em;
+}
+
+.meta-grid .value {
+  font-weight: 700;
+}
+
+.section-title {
+  margin: 0 0 0.75rem;
+  font-size: 1rem;
+}
+
+.table-wrap {
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th,
+td {
+  text-align: left;
+  padding: 0.65rem 0.75rem;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+th {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  color: var(--hh-muted);
+  background: #fafafa;
+}
+
+.num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.qty-input {
+  width: 5.5rem;
+  border: 1px solid #d9d9d9;
+  border-radius: 4px;
+  padding: 0.35rem 0.45rem;
+  font: inherit;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.form-grid label {
+  display: block;
+  font-size: 0.78rem;
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+}
+
+.form-grid input,
+.form-grid select,
+.form-grid textarea {
+  width: 100%;
+  border: 1px solid #d9d9d9;
+  border-radius: 6px;
+  padding: 0.5rem 0.65rem;
+  font: inherit;
+}
+
+.btn-row {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.btn-row button {
+  border: none;
+  border-radius: 6px;
+  padding: 0.55rem 0.9rem;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  background: linear-gradient(90deg, #1dc7ea, #1f77d0);
+  color: #fff;
+}
+
+.btn-row button.secondary {
+  background: #f3f3f3;
+  color: #444;
+}
+
+.btn-row button.danger {
+  background: #c0392b;
+}
+
+.btn-row button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.doc-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.doc-links a {
+  color: #1f77d0;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.doc-links a:hover {
+  text-decoration: underline;
+}
+
+.panels-stack {
+  display: grid;
+  gap: 1rem;
+}

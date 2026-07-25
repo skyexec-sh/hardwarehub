@@ -1,0 +1,82 @@
+<div class="header">
+  <div>
+    <p class="page-subtitle" style="margin: 0">Create accounts, assign roles, and activate store staff.</p>
+  </div>
+  <a class="create-btn" routerLink="/users/new">+ Create user</a>
+</div>
+
+<div class="hh-panel table-panel">
+  <div class="filters-toolbar">
+    <button type="button" class="clear-filters" (click)="clearFilters()">Clear filters</button>
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Username</th>
+          <th>Name</th>
+          <th>Email</th>
+          <th>Roles</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+        <tr class="col-filters">
+          <th><input [formControl]="username" placeholder="Username" /></th>
+          <th><input [formControl]="name" placeholder="Name" /></th>
+          <th><input [formControl]="email" placeholder="Email" /></th>
+          <th>
+            <select [formControl]="role">
+              <option value="">All roles</option>
+              @for (r of roles; track r) {
+                <option [value]="r">{{ r }}</option>
+              }
+            </select>
+          </th>
+          <th>
+            <select [formControl]="active">
+              <option value="">All</option>
+              <option value="true">Active</option>
+              <option value="false">Inactive</option>
+            </select>
+          </th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (user of users(); track user.id) {
+          <tr>
+            <td>{{ user.username }}</td>
+            <td>{{ user.firstName }} {{ user.lastName }}</td>
+            <td>{{ user.email }}</td>
+            <td>
+              <div class="roles">
+                @for (role of user.roles; track role) {
+                  <span class="chip">{{ role }}</span>
+                }
+              </div>
+            </td>
+            <td>
+              <span class="status" [class.on]="user.active" [class.off]="!user.active">
+                {{ user.active ? 'Active' : 'Inactive' }}
+              </span>
+            </td>
+            <td class="actions">
+              <a [routerLink]="['/users', user.id]">Edit</a>
+              @if (user.active) {
+                <button type="button" (click)="deactivate(user)">Deactivate</button>
+              } @else {
+                <button type="button" (click)="activate(user)">Activate</button>
+              }
+              <button type="button" (click)="resetPassword(user)">Reset</button>
+            </td>
+          </tr>
+        } @empty {
+          <tr>
+            <td colspan="6" class="empty">No users match these filters</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+</div>

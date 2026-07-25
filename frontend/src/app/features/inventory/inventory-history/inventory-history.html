@@ -1,0 +1,76 @@
+<div class="header">
+  <p class="page-subtitle" style="margin:0">
+    Stock in, stock out, and adjustments update product quantities automatically.
+  </p>
+  <div class="header-actions">
+    <a class="ghost-btn" routerLink="/inventory/low-stock">Low stock alerts</a>
+    <a class="create-btn" routerLink="/inventory/move">+ Record movement</a>
+  </div>
+</div>
+
+<div class="hh-panel table-panel">
+  <div class="filters-toolbar">
+    <button type="button" class="clear-filters" (click)="clearFilters()">Clear filters</button>
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>When</th>
+          <th>Type</th>
+          <th>Product</th>
+          <th>Qty</th>
+          <th>Before → After</th>
+          <th>Reference</th>
+          <th>By</th>
+        </tr>
+        <tr class="col-filters">
+          <th>
+            <div class="range">
+              <input type="date" [formControl]="from" title="From" />
+              <input type="date" [formControl]="to" title="To" />
+            </div>
+          </th>
+          <th>
+            <select [formControl]="type">
+              <option value="">All</option>
+              <option value="STOCK_IN">Stock in</option>
+              <option value="STOCK_OUT">Stock out</option>
+              <option value="ADJUSTMENT">Adjustment</option>
+            </select>
+          </th>
+          <th><input [formControl]="product" placeholder="SKU / name" /></th>
+          <th></th>
+          <th></th>
+          <th><input [formControl]="reference" placeholder="Reference" /></th>
+          <th><input [formControl]="createdBy" placeholder="User" /></th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (item of items(); track item.id) {
+          <tr>
+            <td>{{ item.createdAt | date: 'medium' }}</td>
+            <td>
+              <span class="type-chip" [attr.data-type]="item.transactionType">
+                {{ label(item.transactionType) }}
+              </span>
+            </td>
+            <td>
+              <div class="sku">{{ item.productSku }}</div>
+              <div class="name">{{ item.productName }}</div>
+            </td>
+            <td class="qty" [attr.data-type]="item.transactionType">
+              {{ qtyDisplay(item) }} {{ item.unit }}
+            </td>
+            <td>{{ item.quantityBefore }} → {{ item.quantityAfter }}</td>
+            <td>{{ item.referenceNo || '—' }}</td>
+            <td>{{ item.createdBy || '—' }}</td>
+          </tr>
+        } @empty {
+          <tr><td colspan="7" class="empty">No inventory movements match these filters</td></tr>
+        }
+      </tbody>
+    </table>
+  </div>
+</div>

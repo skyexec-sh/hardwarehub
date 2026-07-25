@@ -1,0 +1,147 @@
+@if (error() && !quote()) {
+  <div class="hh-panel no-print"><p class="error">{{ error() }}</p><a routerLink="/fulfillment/quotes">Back to quotes</a></div>
+} @else if (quote(); as q) {
+  <div class="toolbar no-print">
+    <a routerLink="/fulfillment/quotes" class="ghost">Back</a>
+    @if (q.status === 'DRAFT') {
+      <a [routerLink]="['/fulfillment/quotes', q.id, 'edit']" class="ghost">Edit</a>
+    }
+    <div class="action-bar">
+      @if (canSend(q)) {
+        <button type="button" [disabled]="acting()" (click)="send()">Mark sent</button>
+      }
+      @if (canAccept(q)) {
+        <button type="button" [disabled]="acting()" (click)="accept()">Accept</button>
+      }
+      @if (canReject(q)) {
+        <button type="button" [disabled]="acting()" (click)="reject()">Reject</button>
+      }
+      @if (canCancel(q)) {
+        <button type="button" [disabled]="acting()" (click)="cancel()">Cancel</button>
+      }
+      @if (canConvert(q)) {
+        <button type="button" class="primary" [disabled]="acting()" (click)="convert()">Convert to SO</button>
+      }
+    </div>
+    <button type="button" class="print-btn" (click)="print()">Print quotation</button>
+  </div>
+
+  @if (error()) {
+    <p class="error no-print">{{ error() }}</p>
+  }
+
+  <p class="status-banner no-print">Status: {{ statusLabel(q.status) }}</p>
+
+  <article class="invoice" id="printable-quote">
+    <header class="invoice-header">
+      <div class="brand-block">
+        <div class="business-name">{{ store.businessName }}</div>
+        <div class="tagline">{{ store.tagline }}</div>
+        <div class="address">{{ store.address }}</div>
+        <div class="prop">{{ store.proprietor }}</div>
+        <div class="tin">{{ store.tinLabel }} {{ store.tin }}</div>
+        <div class="contact">{{ store.phone }} · {{ store.email }}</div>
+      </div>
+      <div class="doc-title-wrap">
+        <div class="doc-title">{{ store.documentTitle }}</div>
+        <div class="receipt-no">No. {{ q.quoteNumber }}</div>
+      </div>
+    </header>
+
+    <section class="party-grid">
+      <div class="field sold-to">
+        <span class="label">Quoted to:</span>
+        <span class="value">{{ q.customerName }}</span>
+      </div>
+      <div class="field">
+        <span class="label">Date:</span>
+        <span class="value">{{ q.createdAt | date: 'MMM d, y' }}</span>
+      </div>
+      <div class="field">
+        <span class="label">Valid until:</span>
+        <span class="value">{{ q.validUntil ? (q.validUntil | date: 'MMM d, y') : '—' }}</span>
+      </div>
+      <div class="field">
+        <span class="label">Customer code:</span>
+        <span class="value">{{ q.customerCode }}</span>
+      </div>
+    </section>
+
+    <table class="items">
+      <thead>
+        <tr>
+          <th class="col-qty">QTY</th>
+          <th class="col-unit">UNIT</th>
+          <th class="col-item">ARTICLES</th>
+          <th class="col-price">UNIT PRICE</th>
+          <th class="col-amt">AMOUNT</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (row of tableRows(); track $index) {
+          <tr>
+            @if (row; as item) {
+              <td class="num">{{ item.quantity | number: '1.0-3' }}</td>
+              <td>{{ item.unit }}</td>
+              <td>
+                <div class="article">{{ item.productName }}</div>
+                <div class="sku">{{ item.productSku }}</div>
+              </td>
+              <td class="num">{{ item.unitPrice | number: '1.2-2' }}</td>
+              <td class="num">{{ item.lineTotal | number: '1.2-2' }}</td>
+            } @else {
+              <td>&nbsp;</td>
+              <td></td>
+              <td></td>
+              <td></td>
+              <td></td>
+            }
+          </tr>
+        }
+      </tbody>
+      <tfoot>
+        @if (q.discountAmount > 0) {
+          <tr class="sub">
+            <td colspan="4" class="label-cell">Less: Discount</td>
+            <td class="num">{{ q.discountAmount | number: '1.2-2' }}</td>
+          </tr>
+        }
+        @if (q.taxAmount > 0) {
+          <tr class="sub">
+            <td colspan="4" class="label-cell">Add: Tax</td>
+            <td class="num">{{ q.taxAmount | number: '1.2-2' }}</td>
+          </tr>
+        }
+        <tr class="total-row">
+          <td colspan="4" class="label-cell">TOTAL AMOUNT</td>
+          <td class="num total-amt">₱{{ q.totalAmount | number: '1.2-2' }}</td>
+        </tr>
+      </tfoot>
+    </table>
+
+    @if (q.notes) {
+      <p class="notes">Notes: {{ q.notes }}</p>
+    }
+
+    <section class="sign-row">
+      <div class="sign-box">
+        <div class="sign-name">{{ q.createdBy || ' ' }}</div>
+        <div class="line"></div>
+        <div class="sign-label">Prepared by</div>
+      </div>
+      <div class="sign-box right">
+        <div class="sign-name">&nbsp;</div>
+        <div class="line"></div>
+        <div class="sign-label">Customer / Accepted by</div>
+      </div>
+    </section>
+
+    <footer class="legal">
+      <p class="bold">{{ store.disclaimer }}</p>
+      <p>{{ store.returnsNote }}</p>
+      <p class="eoe">E. &amp; O. E.</p>
+    </footer>
+  </article>
+} @else {
+  <div class="hh-panel no-print"><p>Loading quotation…</p></div>
+}

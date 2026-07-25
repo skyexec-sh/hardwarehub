@@ -1,0 +1,93 @@
+<div class="header">
+  <p class="page-subtitle" style="margin:0">Search by name, SKU, or barcode. Use column filters for precise lists.</p>
+  <a class="create-btn" routerLink="/products/new">+ Add product</a>
+</div>
+
+<div class="hh-panel barcode-panel">
+  <h3>Barcode lookup</h3>
+  <div class="barcode-row">
+    <input [formControl]="barcode" placeholder="Scan or type barcode" (keyup.enter)="lookupBarcode()" />
+    <button type="button" class="save" (click)="lookupBarcode()">Find</button>
+  </div>
+  @if (barcodeHit(); as hit) {
+    <p class="ok">Found: <strong>{{ hit.name }}</strong> ({{ hit.sku }}) — ₱{{ hit.sellingPrice }}</p>
+  }
+  @if (barcodeError()) {
+    <p class="error">{{ barcodeError() }}</p>
+  }
+</div>
+
+<div class="hh-panel table-panel">
+  <div class="filters-toolbar">
+    <button type="button" class="clear-filters" (click)="clearFilters()">Clear filters</button>
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>SKU</th>
+          <th>Name</th>
+          <th>Category</th>
+          <th>Brand</th>
+          <th>Price</th>
+          <th>Stock</th>
+          <th>Actions</th>
+        </tr>
+        <tr class="col-filters">
+          <th><input [formControl]="sku" placeholder="SKU" /></th>
+          <th><input [formControl]="name" placeholder="Name" /></th>
+          <th>
+            <select [formControl]="categoryId">
+              <option value="">All</option>
+              @for (c of categories(); track c.id) {
+                <option [value]="c.id">{{ c.name }}</option>
+              }
+            </select>
+          </th>
+          <th>
+            <select [formControl]="brandId">
+              <option value="">All</option>
+              @for (b of brands(); track b.id) {
+                <option [value]="b.id">{{ b.name }}</option>
+              }
+            </select>
+          </th>
+          <th></th>
+          <th>
+            <select [formControl]="stockFilter">
+              <option value="">All</option>
+              <option value="low">Low stock</option>
+              <option value="active">Active only</option>
+              <option value="inactive">Inactive only</option>
+            </select>
+          </th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (item of items(); track item.id) {
+          <tr [class.low]="item.lowStock">
+            <td>{{ item.sku }}</td>
+            <td>
+              {{ item.name }}
+              @if (item.lowStock) {
+                <span class="chip warn">Low</span>
+              }
+            </td>
+            <td>{{ item.categoryName || '—' }}</td>
+            <td>{{ item.brandName || '—' }}</td>
+            <td>₱{{ item.sellingPrice }}</td>
+            <td>{{ item.currentStock }} {{ item.unit }}</td>
+            <td class="actions">
+              <a [routerLink]="['/products', item.id]">Edit</a>
+              <button type="button" (click)="remove(item)">Delete</button>
+            </td>
+          </tr>
+        } @empty {
+          <tr><td colspan="7" class="empty">No products match these filters</td></tr>
+        }
+      </tbody>
+    </table>
+  </div>
+</div>

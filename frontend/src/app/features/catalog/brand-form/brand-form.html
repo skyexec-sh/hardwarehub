@@ -1,0 +1,28 @@
+<div class="hh-panel form-panel">
+  <h2>{{ isEdit() ? 'Edit brand' : 'Create brand' }}</h2>
+  <form [formGroup]="form" (ngSubmit)="submit()" class="form">
+    <label>
+      Name
+      <input formControlName="name" />
+    </label>
+    <label>
+      Description
+      <input formControlName="description" />
+    </label>
+    <label>
+      Logo URL
+      <input formControlName="logoUrl" placeholder="https://..." />
+    </label>
+    <label class="check">
+      <input type="checkbox" formControlName="active" />
+      Active
+    </label>
+    @if (error()) {
+      <p class="error">{{ error() }}</p>
+    }
+    <div class="actions">
+      <a routerLink="/brands" class="ghost">Cancel</a>
+      <button type="submit" class="save">Save</button>
+    </div>
+  </form>
+</div>

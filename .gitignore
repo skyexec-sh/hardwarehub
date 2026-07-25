@@ -1,0 +1,29 @@
+# IDE
+.idea/
+*.iml
+.vscode/
+*.swp
+.DS_Store
+
+# Backend
+backend/target/
+backend/.mvn/wrapper/maven-wrapper.jar
+backend/*.log
+
+# Frontend
+frontend/node_modules/
+frontend/dist/
+frontend/.angular/
+frontend/*.log
+
+# Env / secrets
+.env
+.env.local
+*.pem
+
+# OS
+Thumbs.db
+
+# Logs
+logs/
+*.log

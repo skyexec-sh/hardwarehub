@@ -1,0 +1,41 @@
+<div class="header">
+  <p class="page-subtitle" style="margin:0">Organize products into store categories.</p>
+  <a class="create-btn" routerLink="/categories/new">+ Add category</a>
+</div>
+
+<div class="hh-panel table-panel">
+  <div class="toolbar">
+    <input class="search" [formControl]="search" placeholder="Search categories" />
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Description</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (item of items(); track item.id) {
+          <tr>
+            <td>{{ item.name }}</td>
+            <td>{{ item.description || '—' }}</td>
+            <td>
+              <span class="status" [class.on]="item.active" [class.off]="!item.active">
+                {{ item.active ? 'Active' : 'Inactive' }}
+              </span>
+            </td>
+            <td class="actions">
+              <a [routerLink]="['/categories', item.id]">Edit</a>
+              <button type="button" (click)="remove(item)">Delete</button>
+            </td>
+          </tr>
+        } @empty {
+          <tr><td colspan="4" class="empty">No categories found</td></tr>
+        }
+      </tbody>
+    </table>
+  </div>
+</div>

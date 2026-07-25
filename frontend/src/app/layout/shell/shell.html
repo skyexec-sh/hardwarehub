@@ -1,0 +1,139 @@
+<div class="layout" [class.sidebar-collapsed]="!sidebarOpen()">
+  <aside class="sidebar">
+    <div class="brand">
+      <span class="brand-mark">HH</span>
+      <div class="brand-text">
+        <strong>HardwareHub</strong>
+        <small>Store Platform</small>
+      </div>
+    </div>
+
+    <nav class="nav">
+      <p class="nav-section">Main</p>
+      <a routerLink="/dashboard" routerLinkActive="active">
+        <mat-icon>dashboard</mat-icon>
+        <span>Dashboard</span>
+      </a>
+      @if (canManageUsers()) {
+        <a routerLink="/users" routerLinkActive="active">
+          <mat-icon>group</mat-icon>
+          <span>Users</span>
+        </a>
+      }
+
+      <p class="nav-section">Catalog</p>
+      <a routerLink="/products" routerLinkActive="active">
+        <mat-icon>inventory_2</mat-icon>
+        <span>Products</span>
+      </a>
+      @if (canManageCatalog()) {
+        <a routerLink="/categories" routerLinkActive="active">
+          <mat-icon>category</mat-icon>
+          <span>Categories</span>
+        </a>
+        <a routerLink="/brands" routerLinkActive="active">
+          <mat-icon>storefront</mat-icon>
+          <span>Brands</span>
+        </a>
+        <a routerLink="/price-levels" routerLinkActive="active">
+          <mat-icon>sell</mat-icon>
+          <span>Price levels</span>
+        </a>
+      }
+
+      <p class="nav-section">Inventory</p>
+      <a routerLink="/inventory" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
+        <mat-icon>swap_vert</mat-icon>
+        <span>Movements</span>
+      </a>
+      @if (canManageCatalog()) {
+        <a routerLink="/inventory/move" routerLinkActive="active">
+          <mat-icon>add_box</mat-icon>
+          <span>Record movement</span>
+        </a>
+      }
+      <a routerLink="/inventory/low-stock" routerLinkActive="active">
+        <mat-icon>warning_amber</mat-icon>
+        <span>Low stock</span>
+      </a>
+
+      <p class="nav-section">Sales</p>
+      <a routerLink="/customers" routerLinkActive="active">
+        <mat-icon>people</mat-icon>
+        <span>Customers</span>
+      </a>
+      <a routerLink="/sales" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
+        <mat-icon>receipt_long</mat-icon>
+        <span>Sales</span>
+      </a>
+      <a routerLink="/sales/pos" routerLinkActive="active">
+        <mat-icon>point_of_sale</mat-icon>
+        <span>POS</span>
+      </a>
+      <a routerLink="/fulfillment/quotes" routerLinkActive="active">
+        <mat-icon>request_quote</mat-icon>
+        <span>Quotes</span>
+      </a>
+      <a routerLink="/fulfillment/orders" routerLinkActive="active">
+        <mat-icon>local_shipping</mat-icon>
+        <span>Orders</span>
+      </a>
+      <a routerLink="/fulfillment/invoices" routerLinkActive="active">
+        <mat-icon>description</mat-icon>
+        <span>Invoices</span>
+      </a>
+      <a class="disabled">
+        <mat-icon>assessment</mat-icon>
+        <span>Reports</span>
+      </a>
+    </nav>
+  </aside>
+
+  <div class="main">
+    <header class="topbar">
+      <button class="icon-btn" type="button" (click)="toggleSidebar()" aria-label="Toggle sidebar">
+        <mat-icon>menu</mat-icon>
+      </button>
+      <div class="topbar-title">
+        <h1>{{ pageTitle() }}</h1>
+        <nav class="crumbs" aria-label="Breadcrumb">
+          @for (crumb of crumbs(); track crumb.label; let last = $last) {
+            @if (!last && crumb.link) {
+              <a [routerLink]="crumb.link">{{ crumb.label }}</a>
+            } @else if (!last) {
+              <span class="crumb-muted">{{ crumb.label }}</span>
+            } @else {
+              <span class="crumb-current">{{ crumb.label }}</span>
+            }
+            @if (!last) {
+              <span class="sep" aria-hidden="true">/</span>
+            }
+          }
+        </nav>
+      </div>
+      <div class="topbar-actions">
+        @if (user(); as u) {
+          <button type="button" [matMenuTriggerFor]="userMenu" class="user-btn" aria-haspopup="menu">
+            <span class="avatar" aria-hidden="true">{{ u.firstName.charAt(0) }}{{ u.lastName.charAt(0) }}</span>
+            <span class="user-name">{{ u.firstName }} {{ u.lastName }}</span>
+            <mat-icon class="user-chevron" aria-hidden="true">expand_more</mat-icon>
+          </button>
+          <mat-menu #userMenu="matMenu">
+            <button mat-menu-item routerLink="/change-password">
+              <mat-icon>lock</mat-icon>
+              <span>Change password</span>
+            </button>
+            <button mat-menu-item type="button" (click)="logout()">
+              <mat-icon>logout</mat-icon>
+              <span>Logout</span>
+            </button>
+          </mat-menu>
+        }
+      </div>
+    </header>
+
+    <main class="content">
+      <router-outlet />
+    </main>
+  </div>
+</div>

@@ -1,0 +1,81 @@
+<div class="header">
+  <p class="page-subtitle" style="margin:0">
+    Completed POS receipts. Open a sale to print or review the receipt.
+  </p>
+  <a class="create-btn" routerLink="/sales/pos">+ New sale (POS)</a>
+</div>
+
+<div class="hh-panel table-panel">
+  <div class="filters-toolbar">
+    <button type="button" class="clear-filters" (click)="clearFilters()">Clear filters</button>
+  </div>
+
+  @if (error()) {
+    <p class="error">{{ error() }}</p>
+  }
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Receipt</th>
+          <th>Sold at</th>
+          <th>Customer</th>
+          <th>Payment</th>
+          <th>Total</th>
+          <th>Cashier</th>
+          <th>Actions</th>
+        </tr>
+        <tr class="col-filters">
+          <th><input [formControl]="receipt" placeholder="Filter receipt" /></th>
+          <th>
+            <div class="range">
+              <input type="date" [formControl]="soldFrom" title="From" />
+              <input type="date" [formControl]="soldTo" title="To" />
+            </div>
+          </th>
+          <th><input [formControl]="customer" placeholder="Customer" /></th>
+          <th>
+            <select [formControl]="paymentMethod">
+              <option value="">All</option>
+              <option value="CASH">Cash</option>
+              <option value="CARD">Card</option>
+              <option value="CREDIT">Credit</option>
+            </select>
+          </th>
+          <th>
+            <div class="range">
+              <input type="number" step="0.01" [formControl]="totalMin" placeholder="Min" />
+              <input type="number" step="0.01" [formControl]="totalMax" placeholder="Max" />
+            </div>
+          </th>
+          <th><input [formControl]="cashier" placeholder="Cashier" /></th>
+          <th>
+            <select [formControl]="status">
+              <option value="">All</option>
+              <option value="COMPLETED">Completed</option>
+              <option value="VOIDED">Voided</option>
+            </select>
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (item of items(); track item.id) {
+          <tr>
+            <td>{{ item.receiptNumber }}</td>
+            <td>{{ item.soldAt | date: 'medium' }}</td>
+            <td>{{ item.customerName || 'Walk-in' }}</td>
+            <td>{{ item.paymentMethod }}</td>
+            <td>{{ item.totalAmount | currency: 'PHP':'symbol-narrow':'1.2-2' }}</td>
+            <td>{{ item.cashierName || item.cashierUsername }}</td>
+            <td class="actions">
+              <a [routerLink]="['/sales', item.id]">Receipt</a>
+            </td>
+          </tr>
+        } @empty {
+          <tr><td colspan="7" class="empty">No sales match these filters</td></tr>
+        }
+      </tbody>
+    </table>
+  </div>
+</div>

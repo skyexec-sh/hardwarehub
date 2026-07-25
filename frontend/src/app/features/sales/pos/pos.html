@@ -1,0 +1,169 @@
+<div class="pos-layout">
+  <section class="hh-panel catalog-panel">
+    <h2>Add products</h2>
+    <div class="scan-row">
+      <input
+        class="search"
+        [formControl]="barcode"
+        placeholder="Scan barcode and press Enter"
+        (keydown.enter)="$event.preventDefault(); lookupBarcode()"
+      />
+      <button type="button" class="ghost-btn" (click)="lookupBarcode()">Scan</button>
+    </div>
+    <div class="scan-row">
+      <input
+        class="search"
+        [formControl]="productSearch"
+        placeholder="Search SKU or name..."
+        (keydown.enter)="$event.preventDefault(); searchProducts()"
+      />
+      <button type="button" class="ghost-btn" (click)="searchProducts()">Search</button>
+    </div>
+
+    @if (searchHits().length) {
+      <ul class="hits">
+        @for (p of searchHits(); track p.id) {
+          <li>
+            <button type="button" (click)="addProduct(p)">
+              <strong>{{ p.sku }}</strong> — {{ p.name }}
+              <span>{{ p.sellingPrice | currency: 'PHP':'symbol-narrow':'1.2-2' }} · stock {{ p.currentStock }}</span>
+            </button>
+          </li>
+        }
+      </ul>
+    }
+  </section>
+
+  <section class="hh-panel cart-panel">
+    <div class="cart-header">
+      <h2>Cart</h2>
+      <a routerLink="/sales" class="ghost-link">Sale history</a>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Item</th>
+            <th>Qty</th>
+            <th>Price</th>
+            <th>Disc.</th>
+            <th>Line</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (line of cart(); track line.productId) {
+            <tr>
+              <td>
+                <div class="sku">{{ line.sku }}</div>
+                <div class="name">{{ line.name }}</div>
+              </td>
+              <td>
+                <input
+                  class="qty"
+                  type="number"
+                  step="0.001"
+                  [value]="line.quantity"
+                  (change)="setQty(line.productId, $any($event.target).value)"
+                />
+              </td>
+              <td>
+                <input
+                  class="qty"
+                  type="number"
+                  step="0.01"
+                  [value]="line.unitPrice"
+                  (change)="setUnitPrice(line.productId, $any($event.target).value)"
+                />
+              </td>
+              <td>
+                <input
+                  class="qty"
+                  type="number"
+                  step="0.01"
+                  [value]="line.lineDiscount"
+                  (change)="setLineDiscount(line.productId, $any($event.target).value)"
+                />
+              </td>
+              <td>{{ line.quantity * line.unitPrice - line.lineDiscount | currency: 'PHP':'symbol-narrow':'1.2-2' }}</td>
+              <td><button type="button" class="linkish" (click)="removeLine(line.productId)">Remove</button></td>
+            </tr>
+          } @empty {
+            <tr><td colspan="6" class="empty">Cart is empty — scan or search a product</td></tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <div class="checkout-grid">
+      <div class="field">
+        <label for="pos-customer">Customer (optional)</label>
+        <select id="pos-customer" [formControl]="customerId">
+          <option value="">Walk-in</option>
+          @for (c of customers(); track c.id) {
+            <option [value]="c.id">{{ c.customerCode }} — {{ c.businessName }}</option>
+          }
+        </select>
+        <div class="field-meta">
+          <span>Price level · {{ activePriceLevel() }}</span>
+          @if (method() === 'CREDIT' && selectedCustomer(); as c) {
+            <span>
+              Due {{ c.outstandingBalance | currency: 'PHP':'symbol-narrow':'1.2-2' }}
+              · Available {{ availableCredit() | currency: 'PHP':'symbol-narrow':'1.2-2' }}
+            </span>
+          }
+        </div>
+      </div>
+      <div class="field">
+        <label for="pos-payment">Payment</label>
+        <select id="pos-payment" [formControl]="paymentMethod">
+          <option value="CASH">Cash</option>
+          <option value="CARD">Card</option>
+          <option value="CREDIT">Credit</option>
+        </select>
+        <div class="field-meta field-meta-spacer" aria-hidden="true">&nbsp;</div>
+      </div>
+      <label>
+        Sale discount
+        <input type="number" step="0.01" [formControl]="discountAmount" />
+      </label>
+      <label>
+        Tax
+        <input type="number" step="0.01" [formControl]="taxAmount" />
+      </label>
+      @if (method() === 'CASH') {
+        <label>
+          Amount tendered
+          <input type="number" step="0.01" [formControl]="amountTendered" />
+        </label>
+        <div class="totals-line">Change: <strong>{{ change() | currency: 'PHP':'symbol-narrow':'1.2-2' }}</strong></div>
+      }
+      <label>
+        Cashier / Authorized rep.
+        <input [formControl]="cashierName" placeholder="Account name on invoice" />
+      </label>
+      <label>
+        Received by (optional)
+        <input [formControl]="receivedBy" placeholder="Customer / receiver name" />
+      </label>
+      <label class="full">
+        Notes
+        <input [formControl]="notes" />
+      </label>
+    </div>
+
+    <div class="totals">
+      <div>Subtotal <span>{{ subtotal() | currency: 'PHP':'symbol-narrow':'1.2-2' }}</span></div>
+      <div class="grand">Total <span>{{ total() | currency: 'PHP':'symbol-narrow':'1.2-2' }}</span></div>
+    </div>
+
+    @if (error()) {
+      <p class="error">{{ error() }}</p>
+    }
+
+    <button type="button" class="checkout-btn" [disabled]="saving()" (click)="checkout()">
+      {{ saving() ? 'Processing…' : 'Complete sale' }}
+    </button>
+  </section>
+</div>

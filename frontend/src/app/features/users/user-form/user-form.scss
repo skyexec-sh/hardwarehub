@@ -1,0 +1,109 @@
+.form-panel {
+  max-width: 720px;
+}
+
+.form {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.85rem;
+}
+
+label {
+  display: block;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #555;
+}
+
+input,
+select {
+  display: block;
+  width: 100%;
+  margin-top: 0.35rem;
+  border: 1px solid #d9d9d9;
+  border-radius: 6px;
+  padding: 0.7rem 0.8rem;
+  font: inherit;
+  background: #fff;
+}
+
+select[multiple] {
+  min-height: 120px;
+}
+
+input:focus,
+select:focus {
+  outline: none;
+  border-color: #1dc7ea;
+  box-shadow: 0 0 0 3px rgba(29, 199, 234, 0.15);
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+}
+
+.ghost {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.65rem 1rem;
+  border-radius: 6px;
+  color: #555 !important;
+  text-decoration: none !important;
+  background: #f3f3f3;
+  font-weight: 600;
+}
+
+.save {
+  border: none;
+  border-radius: 6px;
+  padding: 0.65rem 1.2rem;
+  font: inherit;
+  font-weight: 700;
+  color: #fff;
+  cursor: pointer;
+  background: linear-gradient(90deg, #1dc7ea, #1f77d0);
+}
+
+label.check {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 600;
+}
+
+label.check input {
+  width: auto;
+  margin: 0;
+}
+
+.error {
+  color: var(--hh-danger);
+  margin: 0;
+}
+
+.hint {
+  display: block;
+  margin-top: 0.35rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: #888;
+}
+
+.ok {
+  color: #5ea000;
+  margin: 0;
+}
+
+@media (max-width: 700px) {
+  .row {
+    grid-template-columns: 1fr;
+  }
+}

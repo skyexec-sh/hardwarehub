@@ -1,0 +1,145 @@
+<div class="hh-panel form-panel">
+  <h2>{{ isEdit() ? 'Edit product' : 'Create product' }}</h2>
+  <form [formGroup]="form" (ngSubmit)="submit()" class="form">
+    <div class="row">
+      <label>
+        SKU
+        <input formControlName="sku" />
+      </label>
+      <label>
+        Barcode
+        <input formControlName="barcode" />
+      </label>
+    </div>
+    <label>
+      Product name
+      <input formControlName="name" />
+    </label>
+    <label>
+      Description
+      <input formControlName="description" />
+    </label>
+    <div class="row">
+      <label>
+        Category
+        <select formControlName="categoryId">
+          <option value="">No category</option>
+          @for (c of categories(); track c.id) {
+            <option [value]="c.id">{{ c.name }}</option>
+          }
+        </select>
+      </label>
+      <label>
+        Brand
+        <select formControlName="brandId">
+          <option value="">No brand</option>
+          @for (b of brands(); track b.id) {
+            <option [value]="b.id">{{ b.name }}</option>
+          }
+        </select>
+      </label>
+    </div>
+    <div class="row">
+      <label>
+        Unit
+        <input formControlName="unit" />
+      </label>
+      <label>
+        Image URL
+        <input formControlName="imageUrl" />
+      </label>
+    </div>
+
+    <label>
+      Cost price
+      <input type="number" step="0.01" formControlName="costPrice" />
+    </label>
+
+    <section class="level-box">
+      <h3>Selling prices by level</h3>
+      <p class="hint">Retail is the walk-in default. Contractor / VIP apply when the customer’s price level is set.</p>
+      <div class="level-grid">
+        @for (level of priceLevels(); track level.id) {
+          <label>
+            {{ level.name }}
+            <input type="number" step="0.01" [formControl]="levelPriceControls()[level.id]" />
+          </label>
+        }
+      </div>
+    </section>
+
+    <label>
+      Price change reason (optional)
+      <input formControlName="priceChangeReason" placeholder="e.g. Supplier increase May 2026" />
+    </label>
+
+    <div class="row">
+      <label>
+        Current stock
+        <input type="number" step="0.001" formControlName="currentStock" [readonly]="isEdit()" />
+        @if (isEdit()) {
+          <small class="hint">Change stock via Inventory movements</small>
+        }
+      </label>
+      <label>
+        Minimum stock
+        <input type="number" step="0.001" formControlName="minimumStock" />
+      </label>
+    </div>
+    <label>
+      Maximum stock
+      <input type="number" step="0.001" formControlName="maximumStock" />
+    </label>
+    <label class="check">
+      <input type="checkbox" formControlName="active" />
+      Active
+    </label>
+    @if (error()) {
+      <p class="error">{{ error() }}</p>
+    }
+    <div class="actions">
+      <a routerLink="/products" class="ghost">Cancel</a>
+      <button type="submit" class="save">Save</button>
+    </div>
+  </form>
+</div>
+
+@if (isEdit() && history().length) {
+  <div class="hh-panel history-panel">
+    <h3>Price history</h3>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>When</th>
+            <th>Type</th>
+            <th>Level</th>
+            <th>Old</th>
+            <th>New</th>
+            <th>Reason</th>
+            <th>By</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (row of history(); track row.id) {
+            <tr>
+              <td>{{ row.changedAt | date: 'medium' }}</td>
+              <td>{{ row.priceType }}</td>
+              <td>{{ row.priceLevelName || '—' }}</td>
+              <td>
+                @if (row.oldPrice != null) {
+                  {{ row.oldPrice | currency: 'PHP':'symbol-narrow':'1.2-2' }}
+                } @else {
+                  —
+                }
+              </td>
+              <td>{{ row.newPrice | currency: 'PHP':'symbol-narrow':'1.2-2' }}</td>
+              <td>{{ row.reason || '—' }}</td>
+              <td>{{ row.changedBy || '—' }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </div>
+}
