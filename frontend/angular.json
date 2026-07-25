@@ -49,6 +49,28 @@
               ],
               "outputHashing": "all"
             },
+            "github-pages": {
+              "baseHref": "/hardwarehub/",
+              "budgets": [
+                {
+                  "type": "initial",
+                  "maximumWarning": "500kB",
+                  "maximumError": "1MB"
+                },
+                {
+                  "type": "anyComponentStyle",
+                  "maximumWarning": "8kB",
+                  "maximumError": "16kB"
+                }
+              ],
+              "outputHashing": "all",
+              "fileReplacements": [
+                {
+                  "replace": "src/environments/environment.ts",
+                  "with": "src/environments/environment.github-pages.ts"
+                }
+              ]
+            },
             "development": {
               "optimization": false,
               "extractLicenses": false,
@@ -68,6 +90,9 @@
           "configurations": {
             "production": {
               "buildTarget": "frontend:build:production"
+            },
+            "github-pages": {
+              "buildTarget": "frontend:build:github-pages"
             },
             "development": {
               "buildTarget": "frontend:build:development"

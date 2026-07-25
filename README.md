@@ -46,6 +46,14 @@ docker compose up --build
 | Swagger UI | http://localhost:8080/swagger-ui.html |
 | Health | http://localhost:8080/actuator/health |
 
+## Free public hosting (GitHub Pages + Neon + Render)
+
+GitHub Pages hosts the **frontend only**. Use free **Neon** Postgres and a free **Render** web service for the API.
+
+Step-by-step: [docs/deploy-free.md](docs/deploy-free.md)
+
+After setup, the UI is at `https://skyexec-sh.github.io/hardwarehub/`.
+
 ### Default owner login
 
 | Field | Value |
