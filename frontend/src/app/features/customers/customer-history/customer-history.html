@@ -1,0 +1,53 @@
+@if (customer(); as c) {
+  <div class="header">
+    <div>
+      <h2 style="margin:0">{{ c.businessName }}</h2>
+      <p class="page-subtitle">
+        {{ c.customerCode }} · Outstanding: ₱{{ c.outstandingBalance }} / Credit limit: ₱{{ c.creditLimit }}
+      </p>
+    </div>
+    <a class="create-btn" [routerLink]="['/customers', c.id]">Edit customer</a>
+  </div>
+}
+
+<div class="hh-panel table-panel">
+  <div class="toolbar">
+    <strong>Purchase history</strong>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Receipt</th>
+          <th>Date</th>
+          <th>Amount</th>
+          <th>Status</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (row of history(); track row.saleId) {
+          <tr>
+            <td>{{ row.receiptNumber }}</td>
+            <td>{{ row.soldAt | date: 'medium' }}</td>
+            <td>₱{{ row.totalAmount }}</td>
+            <td>{{ row.status }}</td>
+            <td class="actions">
+              <a [routerLink]="['/sales', row.saleId]">Receipt</a>
+            </td>
+          </tr>
+        } @empty {
+          <tr>
+            <td colspan="5" class="empty">
+              No purchases yet. Ring up a credit or cash sale for this customer in POS.
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<p style="margin-top:1rem">
+  <a routerLink="/customers">← Back to customers</a>
+</p>

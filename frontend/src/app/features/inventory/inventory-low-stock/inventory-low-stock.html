@@ -1,0 +1,47 @@
+<div class="header">
+  <p class="page-subtitle" style="margin:0">
+    Active products at or below their minimum stock level.
+  </p>
+  <div class="header-actions">
+    <a class="ghost-btn" routerLink="/inventory">Movement history</a>
+    <a class="create-btn" routerLink="/inventory/move" [queryParams]="{ type: 'STOCK_IN' }">+ Stock in</a>
+  </div>
+</div>
+
+<div class="hh-panel table-panel">
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>SKU</th>
+          <th>Product</th>
+          <th>Current</th>
+          <th>Minimum</th>
+          <th>Deficit</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (item of items(); track item.productId) {
+          <tr>
+            <td>{{ item.sku }}</td>
+            <td>{{ item.name }}</td>
+            <td class="qty" data-type="STOCK_OUT">{{ item.currentStock }} {{ item.unit }}</td>
+            <td>{{ item.minimumStock }} {{ item.unit }}</td>
+            <td>{{ item.deficit }} {{ item.unit }}</td>
+            <td class="actions">
+              <a [routerLink]="['/inventory/move']" [queryParams]="{ type: 'STOCK_IN', productId: item.productId }">
+                Stock in
+              </a>
+              <a [routerLink]="['/inventory/move']" [queryParams]="{ type: 'ADJUSTMENT', productId: item.productId }">
+                Adjust
+              </a>
+            </td>
+          </tr>
+        } @empty {
+          <tr><td colspan="6" class="empty">No low-stock products</td></tr>
+        }
+      </tbody>
+    </table>
+  </div>
+</div>

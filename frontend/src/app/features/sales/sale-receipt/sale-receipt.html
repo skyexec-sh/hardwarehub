@@ -1,0 +1,145 @@
+@if (error()) {
+  <div class="hh-panel no-print"><p class="error">{{ error() }}</p><a routerLink="/sales">Back to sales</a></div>
+} @else if (sale(); as s) {
+  <div class="toolbar no-print">
+    <a routerLink="/sales" class="ghost">Back</a>
+    <a routerLink="/sales/pos" class="ghost">New sale</a>
+    <button type="button" class="print-btn" (click)="print()">Print invoice</button>
+  </div>
+
+  <p class="print-hint no-print">
+    Tip: in the print dialog, turn off <strong>Headers and footers</strong> for a clean invoice.
+  </p>
+
+  <article class="invoice" id="printable-invoice">
+    <header class="invoice-header">
+      <div class="brand-block">
+        <div class="business-name">{{ store.businessName }}</div>
+        <div class="tagline">{{ store.tagline }}</div>
+        <div class="address">{{ store.address }}</div>
+        <div class="prop">{{ store.proprietor }}</div>
+        <div class="tin">{{ store.tinLabel }} {{ store.tin }}</div>
+        <div class="contact">{{ store.phone }} · {{ store.email }}</div>
+      </div>
+      <div class="doc-title-wrap">
+        <div class="doc-title">{{ store.documentTitle }}</div>
+        <div class="receipt-no">No. {{ s.receiptNumber }}</div>
+      </div>
+    </header>
+
+    <section class="party-grid">
+      <div class="field sold-to">
+        <span class="label">Sold to:</span>
+        <span class="value">{{ s.customerName || 'Walk-in Customer' }}</span>
+      </div>
+      <div class="field">
+        <span class="label">Date:</span>
+        <span class="value">{{ s.soldAt | date: 'MMM d, y' }}</span>
+      </div>
+      <div class="field">
+        <span class="label">TIN/SC-TIN:</span>
+        <span class="value">{{ s.customerTin || '—' }}</span>
+      </div>
+      <div class="field">
+        <span class="label">Terms:</span>
+        <span class="value">{{ termsLabel(s.paymentMethod) }}</span>
+      </div>
+      <div class="field">
+        <span class="label">OSCA/PWD ID No.:</span>
+        <span class="value">—</span>
+      </div>
+      <div class="field">
+        <span class="label">Business style:</span>
+        <span class="value">{{ s.customerCode || '—' }}</span>
+      </div>
+      <div class="field full">
+        <span class="label">Address:</span>
+        <span class="value">{{ s.customerAddress || (s.customerPhone ? 'Tel. ' + s.customerPhone : '—') }}</span>
+      </div>
+    </section>
+
+    <table class="items">
+      <thead>
+        <tr>
+          <th class="col-qty">QTY</th>
+          <th class="col-unit">UNIT</th>
+          <th class="col-item">ARTICLES</th>
+          <th class="col-price">UNIT PRICE</th>
+          <th class="col-amt">AMOUNT</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (row of tableRows(); track $index) {
+          <tr>
+            @if (row; as item) {
+              <td class="num">{{ item.quantity | number: '1.0-3' }}</td>
+              <td>{{ item.unit }}</td>
+              <td>
+                <div class="article">{{ item.productName }}</div>
+                <div class="sku">{{ item.productSku }}</div>
+              </td>
+              <td class="num">{{ item.unitPrice | number: '1.2-2' }}</td>
+              <td class="num">{{ item.lineTotal | number: '1.2-2' }}</td>
+            } @else {
+              <td>&nbsp;</td>
+              <td></td>
+              <td></td>
+              <td></td>
+              <td></td>
+            }
+          </tr>
+        }
+      </tbody>
+      <tfoot>
+        @if (s.discountAmount > 0) {
+          <tr class="sub">
+            <td colspan="4" class="label-cell">Less: Discount</td>
+            <td class="num">{{ s.discountAmount | number: '1.2-2' }}</td>
+          </tr>
+        }
+        @if (s.taxAmount > 0) {
+          <tr class="sub">
+            <td colspan="4" class="label-cell">Add: Tax</td>
+            <td class="num">{{ s.taxAmount | number: '1.2-2' }}</td>
+          </tr>
+        }
+        <tr class="total-row">
+          <td colspan="4" class="label-cell">TOTAL AMOUNT</td>
+          <td class="num total-amt">₱{{ s.totalAmount | number: '1.2-2' }}</td>
+        </tr>
+      </tfoot>
+    </table>
+
+    @if (s.paymentMethod === 'CASH') {
+      <section class="cash-meta">
+        <div>Amount tendered: ₱{{ s.amountTendered || 0 | number: '1.2-2' }}</div>
+        <div>Change: ₱{{ s.changeAmount || 0 | number: '1.2-2' }}</div>
+      </section>
+    }
+
+    @if (s.notes) {
+      <p class="notes">Notes: {{ s.notes }}</p>
+    }
+
+    <section class="sign-row">
+      <div class="sign-box">
+        <div class="line"></div>
+        <div>Cashier / Authorized Representative</div>
+        <div class="muted">{{ s.cashierUsername }}</div>
+      </div>
+      <div class="sign-box right">
+        <div class="line"></div>
+        <div>Customer / Received by</div>
+      </div>
+    </section>
+
+    <footer class="legal">
+      <p class="bold">{{ store.disclaimer }}</p>
+      <p>{{ store.returnsNote }}</p>
+      <p class="small">{{ store.validityNote }}</p>
+      <p class="eoe">E. &amp; O. E.</p>
+    </footer>
+  </article>
+} @else {
+  <div class="hh-panel no-print"><p>Loading invoice…</p></div>
+}

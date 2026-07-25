@@ -1,0 +1,88 @@
+<div class="hh-panel form-panel">
+  <h2>{{ isEdit() ? 'Edit customer' : 'Create customer' }}</h2>
+  @if (isEdit()) {
+    <p class="page-subtitle">Outstanding balance: ₱{{ outstandingBalance() }}</p>
+  }
+
+  <form [formGroup]="form" (ngSubmit)="submit()" class="form">
+    <div class="row">
+      <label>
+        Customer code
+        <input formControlName="customerCode" />
+      </label>
+      <label>
+        Status
+        <select formControlName="status">
+          @for (s of statuses; track s) {
+            <option [value]="s">{{ s }}</option>
+          }
+        </select>
+      </label>
+    </div>
+
+    <label>
+      Business name
+      <input formControlName="businessName" />
+    </label>
+
+    <div class="row">
+      <label>
+        Contact person
+        <input formControlName="contactPerson" />
+      </label>
+      <label>
+        Phone
+        <input formControlName="phone" />
+      </label>
+    </div>
+
+    <div class="row">
+      <label>
+        Email
+        <input type="email" formControlName="email" />
+      </label>
+      <label>
+        TIN
+        <input formControlName="taxIdentificationNumber" />
+      </label>
+    </div>
+
+    <label>
+      Address
+      <input formControlName="address" />
+    </label>
+
+    <div class="row">
+      <label>
+        City
+        <input formControlName="city" />
+      </label>
+      <label>
+        Province
+        <input formControlName="province" />
+      </label>
+    </div>
+
+    <label>
+      Credit limit
+      <input type="number" step="0.01" formControlName="creditLimit" />
+    </label>
+
+    <label>
+      Notes
+      <input formControlName="notes" />
+    </label>
+
+    @if (error()) {
+      <p class="error">{{ error() }}</p>
+    }
+
+    <div class="actions">
+      <a routerLink="/customers" class="ghost">Cancel</a>
+      @if (isEdit()) {
+        <a [routerLink]="['/customers', id(), 'history']" class="ghost">Purchase history</a>
+      }
+      <button type="submit" class="save">Save</button>
+    </div>
+  </form>
+</div>

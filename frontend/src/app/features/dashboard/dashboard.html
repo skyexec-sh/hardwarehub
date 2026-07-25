@@ -1,0 +1,67 @@
+<p class="page-subtitle">Overview of your store operations.</p>
+
+<section class="hh-stat-grid">
+  <article class="hh-stat-card blue">
+    <div class="icon-wrap"><mat-icon>payments</mat-icon></div>
+    <div class="meta">
+      <div class="label">Today's Sales</div>
+      <div class="value">
+        @if (todaySales() === null) {
+          —
+        } @else {
+          <a routerLink="/sales">{{ todaySales() | currency: 'PHP':'symbol-narrow':'1.2-2' }}</a>
+        }
+      </div>
+    </div>
+  </article>
+  <article class="hh-stat-card green">
+    <div class="icon-wrap"><mat-icon>trending_up</mat-icon></div>
+    <div class="meta">
+      <div class="label">Monthly Revenue</div>
+      <div class="value">
+        @if (monthSales() === null) {
+          —
+        } @else {
+          <a routerLink="/sales">{{ monthSales() | currency: 'PHP':'symbol-narrow':'1.2-2' }}</a>
+        }
+      </div>
+    </div>
+  </article>
+  <article class="hh-stat-card orange">
+    <div class="icon-wrap"><mat-icon>inventory</mat-icon></div>
+    <div class="meta">
+      <div class="label">Low Stock</div>
+      <div class="value">
+        @if (lowStockCount() === null) {
+          —
+        } @else {
+          <a routerLink="/inventory/low-stock">{{ lowStockCount() }}</a>
+        }
+      </div>
+    </div>
+  </article>
+  <article class="hh-stat-card red">
+    <div class="icon-wrap"><mat-icon>request_quote</mat-icon></div>
+    <div class="meta">
+      <div class="label">Pending Quotes</div>
+      <div class="value">—</div>
+    </div>
+  </article>
+</section>
+
+<section class="panels">
+  <div class="hh-panel">
+    <h3>Getting started</h3>
+    <p>
+      Milestone 5 is live: ring up walk-in or credit sales in <strong>POS</strong>, print receipts, and see
+      today’s totals on this dashboard. Stock is deducted automatically on checkout.
+    </p>
+  </div>
+  <div class="hh-panel">
+    <h3>Next modules</h3>
+    <ul>
+      <li>Quotations &amp; PDF export</li>
+      <li>Reports dashboard widgets</li>
+    </ul>
+  </div>
+</section>
