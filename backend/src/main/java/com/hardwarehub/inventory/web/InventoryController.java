@@ -2,6 +2,7 @@ package com.hardwarehub.inventory.web;
 
 import com.hardwarehub.common.dto.PageResponse;
 import com.hardwarehub.inventory.domain.InventoryTransactionType;
+import com.hardwarehub.inventory.dto.InventoryBatchTransactionRequest;
 import com.hardwarehub.inventory.dto.InventorySummaryResponse;
 import com.hardwarehub.inventory.dto.InventoryTransactionRequest;
 import com.hardwarehub.inventory.dto.InventoryTransactionResponse;
@@ -25,6 +26,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.time.Instant;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/inventory")
@@ -65,6 +67,14 @@ public class InventoryController {
     @Operation(summary = "Record stock in, stock out, or adjustment")
     public InventoryTransactionResponse create(@Valid @RequestBody InventoryTransactionRequest request) {
         return inventoryService.create(request);
+    }
+
+    @PostMapping("/transactions/batch")
+    @ResponseStatus(HttpStatus.CREATED)
+    @PreAuthorize("hasAnyRole('OWNER','ADMIN','MANAGER','INVENTORY_STAFF')")
+    @Operation(summary = "Record multiple product movements in one transaction")
+    public List<InventoryTransactionResponse> createBatch(@Valid @RequestBody InventoryBatchTransactionRequest request) {
+        return inventoryService.createBatch(request);
     }
 
     @GetMapping("/low-stock")

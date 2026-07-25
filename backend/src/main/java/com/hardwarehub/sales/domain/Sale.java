@@ -45,6 +45,12 @@ public class Sale {
     @Column(name = "cashier_username", nullable = false, length = 50)
     private String cashierUsername;
 
+    @Column(name = "cashier_name", length = 150)
+    private String cashierName;
+
+    @Column(name = "received_by", length = 150)
+    private String receivedBy;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 30)
     private SaleStatus status = SaleStatus.COMPLETED;

@@ -14,6 +14,8 @@ import com.hardwarehub.common.dto.PageResponse;
 import com.hardwarehub.common.exception.BusinessException;
 import com.hardwarehub.common.exception.ResourceNotFoundException;
 import com.hardwarehub.common.security.SecurityUtils;
+import com.hardwarehub.pricing.dto.LevelPriceResponse;
+import com.hardwarehub.pricing.service.PricingService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -22,6 +24,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -32,6 +35,7 @@ public class ProductService {
     private final CategoryRepository categoryRepository;
     private final CatalogMapper catalogMapper;
     private final AuditService auditService;
+    private final PricingService pricingService;
 
     @Transactional(readOnly = true)
     public PageResponse<ProductResponse> list(
@@ -46,18 +50,18 @@ public class ProductService {
         return PageResponse.from(
                 productRepository
                         .search(search, categoryId, brandId, sku, name, active, lowStockOnly, pageable)
-                        .map(catalogMapper::toProductResponse));
+                        .map(this::toResponse));
     }
 
     @Transactional(readOnly = true)
     public ProductResponse get(Long id) {
-        return catalogMapper.toProductResponse(require(id));
+        return toResponse(require(id));
     }
 
     @Transactional(readOnly = true)
     public ProductResponse findByBarcode(String barcode) {
         return productRepository.findByBarcodeAndDeletedAtIsNull(barcode)
-                .map(catalogMapper::toProductResponse)
+                .map(this::toResponse)
                 .orElseThrow(() -> new ResourceNotFoundException("Product not found for barcode: " + barcode));
     }
 
@@ -65,22 +69,38 @@ public class ProductService {
     public ProductResponse create(ProductRequest request) {
         validateUnique(request.sku(), request.barcode(), null);
         Product product = new Product();
-        apply(product, request);
+        BigDecimal cost = defaultZero(request.costPrice());
+        BigDecimal selling = defaultZero(request.sellingPrice());
+        apply(product, request, cost, selling);
         product.setCreatedBy(SecurityUtils.currentUsername());
         product.setUpdatedBy(SecurityUtils.currentUsername());
         Product saved = productRepository.save(product);
+        pricingService.syncProductPrices(
+                saved, null, null, cost, selling, request.levelPrices(), request.priceChangeReason());
         auditService.log("CREATE", "PRODUCT", String.valueOf(saved.getId()), "Product created: " + saved.getSku());
-        return catalogMapper.toProductResponse(require(saved.getId()));
+        return toResponse(require(saved.getId()));
     }
 
     @Transactional
     public ProductResponse update(Long id, ProductRequest request) {
         Product product = require(id);
         validateUnique(request.sku(), request.barcode(), id);
-        apply(product, request);
+        BigDecimal previousCost = product.getCostPrice();
+        BigDecimal previousSelling = product.getSellingPrice();
+        BigDecimal cost = defaultZero(request.costPrice());
+        BigDecimal selling = defaultZero(request.sellingPrice());
+        apply(product, request, cost, selling);
         product.setUpdatedBy(SecurityUtils.currentUsername());
+        pricingService.syncProductPrices(
+                product,
+                previousCost,
+                previousSelling,
+                cost,
+                selling,
+                request.levelPrices(),
+                request.priceChangeReason());
         auditService.log("UPDATE", "PRODUCT", String.valueOf(id), "Product updated");
-        return catalogMapper.toProductResponse(product);
+        return toResponse(product);
     }
 
     @Transactional
@@ -90,6 +110,33 @@ public class ProductService {
         product.setDeletedAt(Instant.now());
         product.setUpdatedBy(SecurityUtils.currentUsername());
         auditService.log("DELETE", "PRODUCT", String.valueOf(id), "Product soft-deleted");
+    }
+
+    private ProductResponse toResponse(Product product) {
+        ProductResponse base = catalogMapper.toProductResponse(product);
+        List<LevelPriceResponse> levels = pricingService.listProductPrices(product.getId());
+        return new ProductResponse(
+                base.id(),
+                base.sku(),
+                base.barcode(),
+                base.name(),
+                base.description(),
+                base.brandId(),
+                base.brandName(),
+                base.categoryId(),
+                base.categoryName(),
+                base.unit(),
+                base.costPrice(),
+                base.sellingPrice(),
+                base.currentStock(),
+                base.minimumStock(),
+                base.maximumStock(),
+                base.imageUrl(),
+                base.active(),
+                base.lowStock(),
+                base.createdAt(),
+                base.updatedAt(),
+                levels);
     }
 
     private void validateUnique(String sku, String barcode, Long excludeId) {
@@ -111,7 +158,7 @@ public class ProductService {
         }
     }
 
-    private void apply(Product product, ProductRequest request) {
+    private void apply(Product product, ProductRequest request, BigDecimal cost, BigDecimal selling) {
         product.setSku(request.sku().trim().toUpperCase());
         product.setBarcode(blankToNull(request.barcode()));
         product.setName(request.name().trim());
@@ -119,9 +166,8 @@ public class ProductService {
         product.setBrand(resolveBrand(request.brandId()));
         product.setCategory(resolveCategory(request.categoryId()));
         product.setUnit(request.unit().trim().toUpperCase());
-        product.setCostPrice(defaultZero(request.costPrice()));
-        product.setSellingPrice(defaultZero(request.sellingPrice()));
-        // Initial stock only on create; later changes go through inventory movements (M4).
+        product.setCostPrice(cost);
+        product.setSellingPrice(selling);
         if (product.getId() == null) {
             product.setCurrentStock(defaultZero(request.currentStock()));
         }

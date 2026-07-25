@@ -35,6 +35,10 @@
           <mat-icon>storefront</mat-icon>
           <span>Brands</span>
         </a>
+        <a routerLink="/price-levels" routerLinkActive="active">
+          <mat-icon>sell</mat-icon>
+          <span>Price levels</span>
+        </a>
       }
 
       <p class="nav-section">Inventory</p>
@@ -66,6 +70,18 @@
         <mat-icon>point_of_sale</mat-icon>
         <span>POS</span>
       </a>
+      <a routerLink="/fulfillment/quotes" routerLinkActive="active">
+        <mat-icon>request_quote</mat-icon>
+        <span>Quotes</span>
+      </a>
+      <a routerLink="/fulfillment/orders" routerLinkActive="active">
+        <mat-icon>local_shipping</mat-icon>
+        <span>Orders</span>
+      </a>
+      <a routerLink="/fulfillment/invoices" routerLinkActive="active">
+        <mat-icon>description</mat-icon>
+        <span>Invoices</span>
+      </a>
       <a class="disabled">
         <mat-icon>assessment</mat-icon>
         <span>Reports</span>
@@ -80,7 +96,20 @@
       </button>
       <div class="topbar-title">
         <h1>{{ pageTitle() }}</h1>
-        <span>HardwareHub Milestone 5</span>
+        <nav class="crumbs" aria-label="Breadcrumb">
+          @for (crumb of crumbs(); track crumb.label; let last = $last) {
+            @if (!last && crumb.link) {
+              <a [routerLink]="crumb.link">{{ crumb.label }}</a>
+            } @else if (!last) {
+              <span class="crumb-muted">{{ crumb.label }}</span>
+            } @else {
+              <span class="crumb-current">{{ crumb.label }}</span>
+            }
+            @if (!last) {
+              <span class="sep" aria-hidden="true">/</span>
+            }
+          }
+        </nav>
       </div>
       <div class="topbar-actions">
         @if (user(); as u) {

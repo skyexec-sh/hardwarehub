@@ -14,6 +14,9 @@ export interface Customer {
   notes?: string | null;
   creditLimit: number;
   outstandingBalance: number;
+  priceLevelId?: number | null;
+  priceLevelCode?: string | null;
+  priceLevelName?: string | null;
   status: CustomerStatus;
   createdAt: string;
   updatedAt: string;
@@ -31,6 +34,7 @@ export interface CustomerPayload {
   taxIdentificationNumber?: string | null;
   notes?: string | null;
   creditLimit: number;
+  priceLevelId?: number | null;
   status: CustomerStatus;
 }
 
@@ -39,5 +43,6 @@ export interface CustomerPurchaseHistoryItem {
   receiptNumber: string;
   soldAt: string;
   totalAmount: number;
+  paymentMethod: string;
   status: string;
 }

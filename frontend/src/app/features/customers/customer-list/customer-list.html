@@ -1,6 +1,6 @@
 <div class="header">
   <p class="page-subtitle" style="margin:0">
-    Manage walk-in and credit customers. Outstanding balances update on credit sales.
+    Manage walk-in and credit customers. Record payments and print SOA from Account.
   </p>
   <a class="create-btn" routerLink="/customers/new">+ Add customer</a>
 </div>
@@ -67,7 +67,7 @@
             </td>
             <td class="actions">
               <a [routerLink]="['/customers', item.id]">Edit</a>
-              <a [routerLink]="['/customers', item.id, 'history']">History</a>
+              <a [routerLink]="['/customers', item.id, 'history']">Account</a>
               @if (item.status !== 'ACTIVE') {
                 <button type="button" (click)="setStatus(item, 'ACTIVE')">Activate</button>
               }

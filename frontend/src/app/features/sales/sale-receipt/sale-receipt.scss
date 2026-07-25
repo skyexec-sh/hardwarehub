@@ -211,10 +211,20 @@
   width: 100%;
 }
 
+.sign-name {
+  min-height: 1.25rem;
+  font-weight: 700;
+  line-height: 1.2;
+  margin-bottom: 0.15rem;
+}
+
 .sign-box .line {
   border-bottom: 1px solid #222;
-  height: 2rem;
   margin-bottom: 0.35rem;
+}
+
+.sign-label {
+  font-size: 0.82rem;
 }
 
 .muted {

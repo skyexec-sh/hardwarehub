@@ -63,10 +63,20 @@
       </label>
     </div>
 
-    <label>
-      Credit limit
-      <input type="number" step="0.01" formControlName="creditLimit" />
-    </label>
+    <div class="row">
+      <label>
+        Credit limit
+        <input type="number" step="0.01" formControlName="creditLimit" />
+      </label>
+      <label>
+        Price level
+        <select formControlName="priceLevelId">
+          @for (level of priceLevels(); track level.id) {
+            <option [value]="level.id">{{ level.name }}</option>
+          }
+        </select>
+      </label>
+    </div>
 
     <label>
       Notes
@@ -80,7 +90,7 @@
     <div class="actions">
       <a routerLink="/customers" class="ghost">Cancel</a>
       @if (isEdit()) {
-        <a [routerLink]="['/customers', id(), 'history']" class="ghost">Purchase history</a>
+        <a [routerLink]="['/customers', id(), 'history']" class="ghost">Account / ledger</a>
       }
       <button type="submit" class="save">Save</button>
     </div>

@@ -9,6 +9,7 @@
 
   <p class="print-hint no-print">
     Tip: in the print dialog, turn off <strong>Headers and footers</strong> for a clean invoice.
+    Signature names are set at checkout in POS.
   </p>
 
   <article class="invoice" id="printable-invoice">
@@ -123,13 +124,14 @@
 
     <section class="sign-row">
       <div class="sign-box">
+        <div class="sign-name">{{ s.cashierName || s.cashierUsername }}</div>
         <div class="line"></div>
-        <div>Cashier / Authorized Representative</div>
-        <div class="muted">{{ s.cashierUsername }}</div>
+        <div class="sign-label">Cashier / Authorized Representative</div>
       </div>
       <div class="sign-box right">
+        <div class="sign-name">{{ s.receivedBy || ' ' }}</div>
         <div class="line"></div>
-        <div>Customer / Received by</div>
+        <div class="sign-label">Customer / Received by</div>
       </div>
     </section>
 

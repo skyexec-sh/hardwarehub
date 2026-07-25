@@ -17,6 +17,8 @@ public record SaleResponse(
         String customerAddress,
         String customerPhone,
         String cashierUsername,
+        String cashierName,
+        String receivedBy,
         SaleStatus status,
         PaymentMethod paymentMethod,
         BigDecimal subtotal,

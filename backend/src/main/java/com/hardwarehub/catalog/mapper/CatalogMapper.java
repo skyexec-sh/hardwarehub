@@ -23,6 +23,7 @@ public interface CatalogMapper {
     @Mapping(target = "categoryId", source = "category.id")
     @Mapping(target = "categoryName", source = "category.name")
     @Mapping(target = "lowStock", expression = "java(isLowStock(product))")
+    @Mapping(target = "levelPrices", ignore = true)
     ProductResponse toProductResponse(Product product);
 
     default boolean isLowStock(Product product) {

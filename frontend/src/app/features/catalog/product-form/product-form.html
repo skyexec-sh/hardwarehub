@@ -49,16 +49,30 @@
         <input formControlName="imageUrl" />
       </label>
     </div>
-    <div class="row">
-      <label>
-        Cost price
-        <input type="number" step="0.01" formControlName="costPrice" />
-      </label>
-      <label>
-        Selling price
-        <input type="number" step="0.01" formControlName="sellingPrice" />
-      </label>
-    </div>
+
+    <label>
+      Cost price
+      <input type="number" step="0.01" formControlName="costPrice" />
+    </label>
+
+    <section class="level-box">
+      <h3>Selling prices by level</h3>
+      <p class="hint">Retail is the walk-in default. Contractor / VIP apply when the customer’s price level is set.</p>
+      <div class="level-grid">
+        @for (level of priceLevels(); track level.id) {
+          <label>
+            {{ level.name }}
+            <input type="number" step="0.01" [formControl]="levelPriceControls()[level.id]" />
+          </label>
+        }
+      </div>
+    </section>
+
+    <label>
+      Price change reason (optional)
+      <input formControlName="priceChangeReason" placeholder="e.g. Supplier increase May 2026" />
+    </label>
+
     <div class="row">
       <label>
         Current stock
@@ -89,3 +103,43 @@
     </div>
   </form>
 </div>
+
+@if (isEdit() && history().length) {
+  <div class="hh-panel history-panel">
+    <h3>Price history</h3>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>When</th>
+            <th>Type</th>
+            <th>Level</th>
+            <th>Old</th>
+            <th>New</th>
+            <th>Reason</th>
+            <th>By</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (row of history(); track row.id) {
+            <tr>
+              <td>{{ row.changedAt | date: 'medium' }}</td>
+              <td>{{ row.priceType }}</td>
+              <td>{{ row.priceLevelName || '—' }}</td>
+              <td>
+                @if (row.oldPrice != null) {
+                  {{ row.oldPrice | currency: 'PHP':'symbol-narrow':'1.2-2' }}
+                } @else {
+                  —
+                }
+              </td>
+              <td>{{ row.newPrice | currency: 'PHP':'symbol-narrow':'1.2-2' }}</td>
+              <td>{{ row.reason || '—' }}</td>
+              <td>{{ row.changedBy || '—' }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </div>
+}

@@ -3,7 +3,8 @@
 Modern cloud-based Hardware Store Management Platform for SME hardware stores in the Philippines.
 
 
-**Current milestone:** Milestone 5 — Sales / POS & receipts
+**Current milestone:** Milestone 8 — Fulfillment (Quote → SO → DR → Invoice)  
+**Next:** Milestone 9 — Catalog intelligence
 
 ## Stack
 
@@ -132,6 +133,49 @@ Authenticated users can list/view receipts and summaries. Checkout requires `OWN
 
 Payment methods: `CASH`, `CARD`, `CREDIT`. Customer purchase history is populated from completed sales.
 
+## Credit ledger API (Milestone 6)
+
+Authenticated users can view ledgers and statements. Recording payments requires `OWNER`, `ADMIN`, `MANAGER`, or `CASHIER`.
+
+- `GET /api/v1/credit/summary` — customers with balance + total outstanding
+- `GET /api/v1/customers/{id}/ledger` — charge + payment lines with running balance
+- `GET /api/v1/customers/{id}/payments` — payment history
+- `POST /api/v1/customers/{id}/payments` — record collection (reduces outstanding balance)
+- `GET /api/v1/customers/{id}/statement?from=&to=` — Statement of Account for a period
+
+Collection methods: `CASH`, `CARD`, `BANK_TRANSFER`, `CHECK`, `GCASH`, `OTHER`. UI: Customers → **Account** (Overview / Ledger / Payments / SOA / Purchases).
+
+## Pricing API (Milestone 7)
+
+- `GET /api/v1/price-levels` — Retail / Contractor / VIP
+- `PUT /api/v1/price-levels/{id}` — rename / activate (OWNER, ADMIN, MANAGER)
+- `GET /api/v1/products/{id}/level-prices`
+- `GET /api/v1/products/{id}/price-history`
+- `GET /api/v1/pricing/resolve?productId=&customerId=&priceLevelId=`
+
+Product create/update accepts `levelPrices[]` and optional `priceChangeReason`. Customer has `priceLevelId`. POS resolves unit price from the customer’s level; cashiers may override line price.
+
+## Fulfillment API (Milestone 8)
+
+Authenticated users can read quotes, orders, deliveries, and invoices. Writes require `OWNER`, `ADMIN`, `MANAGER`, or `CASHIER` (deliveries also allow `INVENTORY_STAFF`).
+
+Document flow: **Quotation → Sales Order → Delivery Receipt (partial) → Invoice → Payment**
+
+- `GET /api/v1/fulfillment/summary` — pending quotes, open orders, partial deliveries
+- `GET/POST /api/v1/fulfillment/quotes` — list / create draft
+- `GET/PUT /api/v1/fulfillment/quotes/{id}` — detail / update draft
+- `POST /api/v1/fulfillment/quotes/{id}/send|accept|reject|cancel|convert`
+- `GET/POST /api/v1/fulfillment/orders` — list / create SO (optional quotation link)
+- `GET /api/v1/fulfillment/orders/{id}` — ordered vs delivered vs open vs billable qty
+- `POST /api/v1/fulfillment/orders/{id}/cancel` — only when no deliveries
+- `POST /api/v1/fulfillment/orders/{id}/deliveries` — partial DR; **stock-out on delivered qty only**
+- `GET /api/v1/fulfillment/deliveries/{id}`
+- `POST /api/v1/fulfillment/orders/{id}/invoices` — invoice delivered (uninvoiced) qty
+- `GET /api/v1/fulfillment/invoices` · `GET /api/v1/fulfillment/invoices/{id}`
+- `POST /api/v1/fulfillment/invoices/{id}/payments` — credit collections via M6 ledger (`customer_payments.invoice_id`)
+
+Doc numbers: `QUO-`, `SO-`, `DR-`, `INV-` (date + sequence). UI: Sales → Quotes / Orders / Invoices; printable quote, DR, and invoice. Dashboard **Pending Quotes** is live.
+
 ## Roles
 
 `OWNER`, `ADMIN`, `MANAGER`, `CASHIER`, `INVENTORY_STAFF`
@@ -145,11 +189,11 @@ mvn test
 
 ## Architecture notes
 
-- Modular monolith packages: `common`, `auth`, `user`, `catalog`, `customer`, `inventory`, `sales` (future: quotations/reports)
+- Modular monolith packages: `common`, `auth`, `user`, `catalog`, `customer`, `inventory`, `sales`, `credit`, `pricing`, `fulfillment` (future: reports)
 - DTOs only on the API boundary; JPA entities are never exposed
 - JWT access tokens + rotating refresh tokens (SHA-256 hashed at rest)
-- Soft delete + basic audit logging for auth/user/inventory/sales actions
+- Soft delete + basic audit logging for auth/user/inventory/sales/credit/pricing/fulfillment actions
 
 ## Next milestone
 
-Milestone 6 — Quotations & PDF export
+Milestone 9 — Catalog intelligence (smart search, alternatives, bundles, rich purchase history)

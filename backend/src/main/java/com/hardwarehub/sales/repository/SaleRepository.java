@@ -25,26 +25,28 @@ public interface SaleRepository extends JpaRepository<Sale, Long> {
 
     @EntityGraph(attributePaths = {"customer"})
     @Query("""
-            SELECT s FROM Sale s
+            SELECT s FROM Sale s LEFT JOIN s.customer c
             WHERE (:status IS NULL OR s.status = :status)
               AND (:paymentMethod IS NULL OR s.paymentMethod = :paymentMethod)
-              AND (:customerId IS NULL OR s.customer.id = :customerId)
+              AND (:customerId IS NULL OR c.id = :customerId)
               AND (:receipt IS NULL OR :receipt = '' OR
                    LOWER(s.receiptNumber) LIKE LOWER(CONCAT('%', :receipt, '%')))
               AND (:customer IS NULL OR :customer = '' OR
-                   LOWER(COALESCE(s.customer.businessName, 'walk-in')) LIKE LOWER(CONCAT('%', :customer, '%')) OR
-                   LOWER(COALESCE(s.customer.customerCode, '')) LIKE LOWER(CONCAT('%', :customer, '%')))
+                   LOWER(COALESCE(c.businessName, 'walk-in')) LIKE LOWER(CONCAT('%', :customer, '%')) OR
+                   LOWER(COALESCE(c.customerCode, '')) LIKE LOWER(CONCAT('%', :customer, '%')))
               AND (:cashier IS NULL OR :cashier = '' OR
-                   LOWER(s.cashierUsername) LIKE LOWER(CONCAT('%', :cashier, '%')))
-              AND (:soldFrom IS NULL OR s.soldAt >= :soldFrom)
-              AND (:soldTo IS NULL OR s.soldAt < :soldTo)
-              AND (:totalMin IS NULL OR s.totalAmount >= :totalMin)
-              AND (:totalMax IS NULL OR s.totalAmount <= :totalMax)
+                   LOWER(s.cashierUsername) LIKE LOWER(CONCAT('%', :cashier, '%')) OR
+                   LOWER(COALESCE(s.cashierName, '')) LIKE LOWER(CONCAT('%', :cashier, '%')))
+              AND s.soldAt >= :soldFrom
+              AND s.soldAt < :soldTo
+              AND s.totalAmount >= :totalMin
+              AND s.totalAmount <= :totalMax
               AND (:search IS NULL OR :search = '' OR
                    LOWER(s.receiptNumber) LIKE LOWER(CONCAT('%', :search, '%')) OR
-                   LOWER(COALESCE(s.customer.businessName, '')) LIKE LOWER(CONCAT('%', :search, '%')) OR
-                   LOWER(COALESCE(s.customer.customerCode, '')) LIKE LOWER(CONCAT('%', :search, '%')) OR
-                   LOWER(s.cashierUsername) LIKE LOWER(CONCAT('%', :search, '%')))
+                   LOWER(COALESCE(c.businessName, '')) LIKE LOWER(CONCAT('%', :search, '%')) OR
+                   LOWER(COALESCE(c.customerCode, '')) LIKE LOWER(CONCAT('%', :search, '%')) OR
+                   LOWER(s.cashierUsername) LIKE LOWER(CONCAT('%', :search, '%')) OR
+                   LOWER(COALESCE(s.cashierName, '')) LIKE LOWER(CONCAT('%', :search, '%')))
             """)
     Page<Sale> search(
             @Param("search") String search,
@@ -62,6 +64,31 @@ public interface SaleRepository extends JpaRepository<Sale, Long> {
 
     @EntityGraph(attributePaths = {"customer"})
     List<Sale> findByCustomerIdAndStatusOrderBySoldAtDesc(Long customerId, SaleStatus status);
+
+    @EntityGraph(attributePaths = {"customer"})
+    List<Sale> findByCustomerIdAndPaymentMethodAndStatusOrderBySoldAtAscIdAsc(
+            Long customerId, PaymentMethod paymentMethod, SaleStatus status);
+
+    @Query("""
+            SELECT COALESCE(SUM(s.totalAmount), 0) FROM Sale s
+            WHERE s.customer.id = :customerId
+              AND s.paymentMethod = com.hardwarehub.sales.domain.PaymentMethod.CREDIT
+              AND s.status = com.hardwarehub.sales.domain.SaleStatus.COMPLETED
+              AND s.soldAt < :before
+            """)
+    BigDecimal sumCreditChargesBefore(@Param("customerId") Long customerId, @Param("before") Instant before);
+
+    @Query("""
+            SELECT COALESCE(SUM(s.totalAmount), 0) FROM Sale s
+            WHERE s.customer.id = :customerId
+              AND s.paymentMethod = com.hardwarehub.sales.domain.PaymentMethod.CREDIT
+              AND s.status = com.hardwarehub.sales.domain.SaleStatus.COMPLETED
+              AND s.soldAt >= :from AND s.soldAt < :to
+            """)
+    BigDecimal sumCreditChargesBetween(
+            @Param("customerId") Long customerId,
+            @Param("from") Instant from,
+            @Param("to") Instant to);
 
     @Query("""
             SELECT COALESCE(SUM(s.totalAmount), 0) FROM Sale s

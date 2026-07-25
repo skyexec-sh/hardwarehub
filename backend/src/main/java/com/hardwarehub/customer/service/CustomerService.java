@@ -12,6 +12,9 @@ import com.hardwarehub.customer.dto.CustomerRequest;
 import com.hardwarehub.customer.dto.CustomerResponse;
 import com.hardwarehub.customer.mapper.CustomerMapper;
 import com.hardwarehub.customer.repository.CustomerRepository;
+import com.hardwarehub.pricing.domain.PriceLevel;
+import com.hardwarehub.pricing.repository.PriceLevelRepository;
+import com.hardwarehub.pricing.service.PricingService;
 import com.hardwarehub.sales.domain.SaleStatus;
 import com.hardwarehub.sales.repository.SaleRepository;
 import lombok.RequiredArgsConstructor;
@@ -35,6 +38,7 @@ public class CustomerService {
     private final CustomerMapper customerMapper;
     private final AuditService auditService;
     private final SaleRepository saleRepository;
+    private final PriceLevelRepository priceLevelRepository;
 
     @Transactional(readOnly = true)
     public PageResponse<CustomerResponse> list(
@@ -67,6 +71,7 @@ public class CustomerService {
                         s.getReceiptNumber(),
                         s.getSoldAt(),
                         s.getTotalAmount(),
+                        s.getPaymentMethod().name(),
                         s.getStatus().name()))
                 .toList();
     }
@@ -127,7 +132,19 @@ public class CustomerService {
         customer.setTaxIdentificationNumber(blankToNull(request.taxIdentificationNumber()));
         customer.setNotes(blankToNull(request.notes()));
         customer.setCreditLimit(request.creditLimit() == null ? BigDecimal.ZERO : request.creditLimit());
+        customer.setPriceLevel(resolvePriceLevel(request.priceLevelId()));
         customer.setStatus(request.status() == null ? CustomerStatus.ACTIVE : request.status());
+    }
+
+    private PriceLevel resolvePriceLevel(Long priceLevelId) {
+        if (priceLevelId == null) {
+            return priceLevelRepository
+                    .findByCodeIgnoreCase(PricingService.RETAIL_CODE)
+                    .orElse(null);
+        }
+        return priceLevelRepository
+                .findByIdAndActiveTrue(priceLevelId)
+                .orElseThrow(() -> new ResourceNotFoundException("Price level not found: " + priceLevelId));
     }
 
     private void validateCode(String code, Long excludeId) {

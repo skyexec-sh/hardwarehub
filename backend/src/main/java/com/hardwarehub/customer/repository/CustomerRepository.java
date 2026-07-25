@@ -5,18 +5,40 @@ import com.hardwarehub.customer.domain.CustomerStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import jakarta.persistence.LockModeType;
+import java.math.BigDecimal;
 import java.util.Optional;
 
 public interface CustomerRepository extends JpaRepository<Customer, Long> {
 
     Optional<Customer> findByIdAndDeletedAtIsNull(Long id);
 
+    Optional<Customer> findByCustomerCodeIgnoreCaseAndDeletedAtIsNull(String customerCode);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT c FROM Customer c WHERE c.id = :id AND c.deletedAt IS NULL")
+    Optional<Customer> findByIdForUpdate(@Param("id") Long id);
+
     boolean existsByCustomerCodeIgnoreCaseAndDeletedAtIsNull(String customerCode);
 
     boolean existsByCustomerCodeIgnoreCaseAndDeletedAtIsNullAndIdNot(String customerCode, Long id);
+
+    @Query("""
+            SELECT COUNT(c) FROM Customer c
+            WHERE c.deletedAt IS NULL AND c.outstandingBalance > 0
+            """)
+    long countWithBalanceDue();
+
+    @Query("""
+            SELECT COALESCE(SUM(c.outstandingBalance), 0) FROM Customer c
+            WHERE c.deletedAt IS NULL AND c.outstandingBalance > 0
+            """)
+    BigDecimal sumOutstandingBalances();
+
 
     @Query("""
             SELECT c FROM Customer c

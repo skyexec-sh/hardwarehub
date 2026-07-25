@@ -1,6 +1,6 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { merge } from 'rxjs';
 import { debounceTime } from 'rxjs/operators';
 import { CustomerApiService } from '../../../core/services/customer-api.service';
@@ -14,6 +14,7 @@ import { Customer, CustomerStatus } from '../../../core/models/customer.models';
 })
 export class CustomerListComponent implements OnInit {
   private readonly api = inject(CustomerApiService);
+  private readonly route = inject(ActivatedRoute);
 
   readonly items = signal<Customer[]>([]);
   readonly code = new FormControl('', { nonNullable: true });
@@ -25,6 +26,9 @@ export class CustomerListComponent implements OnInit {
   readonly status = new FormControl('', { nonNullable: true });
 
   ngOnInit(): void {
+    if (this.route.snapshot.queryParamMap.get('balanceDue') === '1') {
+      this.balanceDue.setValue('1', { emitEvent: false });
+    }
     this.load();
     merge(
       this.code.valueChanges,

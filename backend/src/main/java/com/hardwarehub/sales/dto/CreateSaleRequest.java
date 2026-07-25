@@ -16,6 +16,8 @@ public record CreateSaleRequest(
         @NotNull @DecimalMin("0.00") BigDecimal taxAmount,
         BigDecimal amountTendered,
         String notes,
+        @jakarta.validation.constraints.Size(max = 150) String cashierName,
+        @jakarta.validation.constraints.Size(max = 150) String receivedBy,
         @NotEmpty @Valid List<SaleItemRequest> items
 ) {
 }

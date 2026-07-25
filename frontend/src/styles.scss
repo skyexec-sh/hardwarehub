@@ -147,6 +147,10 @@ h3 {
   background: linear-gradient(135deg, #ffc107, #ff9500);
 }
 
+.hh-stat-card.teal .icon-wrap {
+  background: linear-gradient(135deg, #26a69a, #00897b);
+}
+
 .hh-stat-card.red .icon-wrap {
   background: linear-gradient(135deg, #ff6b6b, #fb404b);
 }
@@ -278,9 +282,16 @@ table thead tr.col-filters .range input {
     margin: 0 !important;
   }
 
-  body.printing-receipt .hh-panel:not(.invoice) {
+  body.printing-receipt .hh-panel:not(.invoice):not(.soa-doc) {
     box-shadow: none !important;
     border: none !important;
+  }
+
+  body.printing-receipt .header,
+  body.printing-receipt .tabs,
+  body.printing-receipt .screen-only,
+  body.printing-receipt .back-link {
+    display: none !important;
   }
 }
 

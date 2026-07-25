@@ -1,3 +1,5 @@
+import type { LevelPrice, LevelPricePayload } from './pricing.models';
+
 export interface Category {
   id: number;
   name: string;
@@ -38,6 +40,7 @@ export interface Product {
   lowStock: boolean;
   createdAt: string;
   updatedAt: string;
+  levelPrices?: LevelPrice[];
 }
 
 export interface CategoryPayload {
@@ -68,4 +71,6 @@ export interface ProductPayload {
   maximumStock?: number | null;
   imageUrl?: string | null;
   active?: boolean;
+  levelPrices?: LevelPricePayload[];
+  priceChangeReason?: string | null;
 }

@@ -20,6 +20,7 @@ public record CustomerRequest(
         @Size(max = 50) String taxIdentificationNumber,
         String notes,
         @NotNull @DecimalMin("0.0") BigDecimal creditLimit,
+        Long priceLevelId,
         @NotNull CustomerStatus status
 ) {
 }

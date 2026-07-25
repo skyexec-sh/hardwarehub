@@ -1,16 +1,16 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { CatalogApiService } from '../../../core/services/catalog-api.service';
 import { InventoryApiService } from '../../../core/services/inventory-api.service';
 import { Product } from '../../../core/models/catalog.models';
-import { InventoryTransactionType } from '../../../core/models/inventory.models';
+import { InventoryMovementLine, InventoryTransactionType } from '../../../core/models/inventory.models';
 
 @Component({
   selector: 'app-inventory-movement',
   imports: [ReactiveFormsModule, RouterLink],
   templateUrl: './inventory-movement.html',
-  styleUrl: '../../users/user-form/user-form.scss',
+  styleUrl: './inventory-movement.scss',
 })
 export class InventoryMovementComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
@@ -19,16 +19,17 @@ export class InventoryMovementComponent implements OnInit {
   private readonly inventoryApi = inject(InventoryApiService);
   private readonly catalogApi = inject(CatalogApiService);
 
-  readonly products = signal<Product[]>([]);
-  readonly selected = signal<Product | null>(null);
+  readonly lines = signal<InventoryMovementLine[]>([]);
+  readonly searchHits = signal<Product[]>([]);
   readonly error = signal<string | null>(null);
+  readonly saving = signal(false);
   readonly types: InventoryTransactionType[] = ['STOCK_IN', 'STOCK_OUT', 'ADJUSTMENT'];
 
+  readonly productSearch = new FormControl('', { nonNullable: true });
+  readonly barcode = new FormControl('', { nonNullable: true });
+
   readonly form = this.fb.group({
-    productId: this.fb.nonNullable.control(0, [Validators.required, Validators.min(1)]),
     transactionType: this.fb.nonNullable.control<InventoryTransactionType>('STOCK_IN', Validators.required),
-    quantity: this.fb.nonNullable.control(1, [Validators.required, Validators.min(0)]),
-    unitCost: this.fb.control<number | null>(null),
     referenceNo: this.fb.nonNullable.control(''),
     notes: this.fb.nonNullable.control(''),
   });
@@ -38,35 +39,106 @@ export class InventoryMovementComponent implements OnInit {
     if (type && this.types.includes(type)) {
       this.form.patchValue({ transactionType: type });
     }
+
     const productId = Number(this.route.snapshot.queryParamMap.get('productId') || 0);
     if (productId) {
-      this.form.patchValue({ productId });
+      this.catalogApi.getProduct(productId).subscribe({
+        next: (product) => this.addProduct(product),
+        error: () => this.error.set('Unable to prefill product from link'),
+      });
     }
-
-    this.catalogApi.listProducts('', null, null, 0, 200).subscribe({
-      next: (page) => {
-        this.products.set(page.content);
-        this.syncSelected();
-      },
-    });
-
-    this.form.controls.productId.valueChanges.subscribe(() => this.syncSelected());
-    this.form.controls.transactionType.valueChanges.subscribe((t) => {
-      if (t === 'ADJUSTMENT' && this.selected()) {
-        this.form.patchValue({ quantity: this.selected()!.currentStock }, { emitEvent: false });
-      }
-    });
   }
 
   quantityHint(): string {
     const type = this.form.controls.transactionType.value;
     if (type === 'ADJUSTMENT') {
-      return 'Enter the new absolute stock level';
+      return 'For each line, enter the new absolute stock level';
     }
     if (type === 'STOCK_OUT') {
-      return 'Quantity to remove from stock';
+      return 'Search and add products, then enter quantities to remove';
     }
-    return 'Quantity to add to stock';
+    return 'Search and add products, then enter quantities to add';
+  }
+
+  searchProducts(): void {
+    const q = this.productSearch.value.trim();
+    if (!q) {
+      this.searchHits.set([]);
+      return;
+    }
+    this.catalogApi.listProducts(q, null, null, 0, 12).subscribe({
+      next: (page) => this.searchHits.set(page.content),
+    });
+  }
+
+  lookupBarcode(): void {
+    const code = this.barcode.value.trim();
+    this.error.set(null);
+    if (!code) {
+      return;
+    }
+    this.catalogApi.getProductByBarcode(code).subscribe({
+      next: (product) => {
+        this.addProduct(product);
+        this.barcode.setValue('');
+      },
+      error: () => this.error.set('No product found for that barcode'),
+    });
+  }
+
+  addProduct(product: Product): void {
+    this.error.set(null);
+    if (!product.active) {
+      this.error.set('Product is inactive');
+      return;
+    }
+    if (this.lines().some((l) => l.productId === product.id)) {
+      this.error.set(`${product.sku} is already on the list`);
+      return;
+    }
+
+    const type = this.form.controls.transactionType.value;
+    const defaultQty = type === 'ADJUSTMENT' ? product.currentStock : 1;
+
+    this.lines.update((rows) => [
+      ...rows,
+      {
+        productId: product.id,
+        sku: product.sku,
+        name: product.name,
+        unit: product.unit,
+        stock: product.currentStock,
+        quantity: defaultQty,
+        unitCost: product.costPrice ?? null,
+      },
+    ]);
+    this.searchHits.set([]);
+    this.productSearch.setValue('');
+  }
+
+  setQty(productId: number, quantity: number): void {
+    const qty = Number(quantity);
+    if (Number.isNaN(qty)) {
+      return;
+    }
+    this.lines.update((rows) =>
+      rows.map((l) => (l.productId === productId ? { ...l, quantity: qty } : l)),
+    );
+  }
+
+  setUnitCost(productId: number, unitCost: number | string): void {
+    const raw = unitCost === '' || unitCost === null || unitCost === undefined ? null : Number(unitCost);
+    this.lines.update((rows) =>
+      rows.map((l) =>
+        l.productId === productId
+          ? { ...l, unitCost: raw === null || Number.isNaN(raw) ? null : raw }
+          : l,
+      ),
+    );
+  }
+
+  removeLine(productId: number): void {
+    this.lines.update((rows) => rows.filter((l) => l.productId !== productId));
   }
 
   submit(): void {
@@ -74,39 +146,51 @@ export class InventoryMovementComponent implements OnInit {
       this.form.markAllAsTouched();
       return;
     }
-    this.error.set(null);
-    const value = this.form.getRawValue();
-    const type = value.transactionType;
-    if (type !== 'ADJUSTMENT' && Number(value.quantity) <= 0) {
-      this.error.set('Quantity must be greater than zero');
+
+    const rows = this.lines();
+    if (!rows.length) {
+      this.error.set('Add at least one product');
       return;
     }
 
+    const type = this.form.controls.transactionType.value;
+    for (const line of rows) {
+      if (type !== 'ADJUSTMENT' && line.quantity <= 0) {
+        this.error.set(`Quantity for ${line.sku} must be greater than zero`);
+        return;
+      }
+      if (type === 'ADJUSTMENT' && line.quantity < 0) {
+        this.error.set(`Adjusted stock for ${line.sku} cannot be negative`);
+        return;
+      }
+      if (type === 'STOCK_OUT' && line.quantity > line.stock) {
+        this.error.set(`Insufficient stock for ${line.sku}. Available: ${line.stock}`);
+        return;
+      }
+    }
+
+    this.error.set(null);
+    this.saving.set(true);
+    const meta = this.form.getRawValue();
+
     this.inventoryApi
-      .create({
-        productId: Number(value.productId),
+      .createBatch({
         transactionType: type,
-        quantity: Number(value.quantity),
-        unitCost:
-          value.unitCost === null || Number.isNaN(Number(value.unitCost)) ? null : Number(value.unitCost),
-        referenceNo: value.referenceNo || null,
-        notes: value.notes || null,
+        referenceNo: meta.referenceNo || null,
+        notes: meta.notes || null,
+        lines: rows.map((l) => ({
+          productId: l.productId,
+          quantity: Number(l.quantity),
+          unitCost: l.unitCost,
+        })),
       })
       .subscribe({
         next: () => void this.router.navigate(['/inventory']),
         error: (err) => {
-          const msg = err?.error?.message || err?.error?.detail || 'Unable to record movement';
+          this.saving.set(false);
+          const msg = err?.error?.message || err?.error?.detail || 'Unable to record movements';
           this.error.set(msg);
         },
       });
-  }
-
-  private syncSelected(): void {
-    const id = Number(this.form.controls.productId.value);
-    const product = this.products().find((p) => p.id === id) ?? null;
-    this.selected.set(product);
-    if (product && this.form.controls.transactionType.value === 'ADJUSTMENT') {
-      this.form.patchValue({ quantity: product.currentStock }, { emitEvent: false });
-    }
   }
 }

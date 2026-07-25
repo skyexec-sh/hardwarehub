@@ -19,6 +19,9 @@ public record CustomerResponse(
         String notes,
         BigDecimal creditLimit,
         BigDecimal outstandingBalance,
+        Long priceLevelId,
+        String priceLevelCode,
+        String priceLevelName,
         CustomerStatus status,
         Instant createdAt,
         Instant updatedAt

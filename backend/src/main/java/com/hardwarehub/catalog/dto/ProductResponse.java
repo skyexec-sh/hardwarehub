@@ -1,7 +1,10 @@
 package com.hardwarehub.catalog.dto;
 
+import com.hardwarehub.pricing.dto.LevelPriceResponse;
+
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.List;
 
 public record ProductResponse(
         Long id,
@@ -23,6 +26,7 @@ public record ProductResponse(
         boolean active,
         boolean lowStock,
         Instant createdAt,
-        Instant updatedAt
+        Instant updatedAt,
+        List<LevelPriceResponse> levelPrices
 ) {
 }

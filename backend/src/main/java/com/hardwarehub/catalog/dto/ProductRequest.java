@@ -1,11 +1,14 @@
 package com.hardwarehub.catalog.dto;
 
+import com.hardwarehub.pricing.dto.LevelPriceRequest;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 public record ProductRequest(
         @NotBlank @Size(max = 50) String sku,
@@ -21,6 +24,8 @@ public record ProductRequest(
         @NotNull @DecimalMin("0.0") BigDecimal minimumStock,
         @DecimalMin("0.0") BigDecimal maximumStock,
         @Size(max = 500) String imageUrl,
-        Boolean active
+        Boolean active,
+        @Valid List<LevelPriceRequest> levelPrices,
+        @Size(max = 255) String priceChangeReason
 ) {
 }

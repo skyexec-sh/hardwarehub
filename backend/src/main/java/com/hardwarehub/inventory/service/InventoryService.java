@@ -9,7 +9,9 @@ import com.hardwarehub.common.exception.ResourceNotFoundException;
 import com.hardwarehub.common.security.SecurityUtils;
 import com.hardwarehub.inventory.domain.InventoryTransaction;
 import com.hardwarehub.inventory.domain.InventoryTransactionType;
+import com.hardwarehub.inventory.dto.InventoryBatchTransactionRequest;
 import com.hardwarehub.inventory.dto.InventorySummaryResponse;
+import com.hardwarehub.inventory.dto.InventoryTransactionLineRequest;
 import com.hardwarehub.inventory.dto.InventoryTransactionRequest;
 import com.hardwarehub.inventory.dto.InventoryTransactionResponse;
 import com.hardwarehub.inventory.dto.LowStockProductResponse;
@@ -22,10 +24,19 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
 public class InventoryService {
+
+    private static final Instant OPEN_RANGE_START = Instant.EPOCH;
+    private static final Instant OPEN_RANGE_END = Instant.parse("9999-12-31T23:59:59.999Z");
 
     private final InventoryTransactionRepository transactionRepository;
     private final ProductRepository productRepository;
@@ -43,9 +54,11 @@ public class InventoryService {
             java.time.Instant from,
             java.time.Instant to,
             Pageable pageable) {
+        Instant fromDate = from != null ? from : OPEN_RANGE_START;
+        Instant toDate = to != null ? to : OPEN_RANGE_END;
         return PageResponse.from(
                 transactionRepository
-                        .search(productId, type, search, product, reference, createdBy, from, to, pageable)
+                        .search(productId, type, search, product, reference, createdBy, fromDate, toDate, pageable)
                         .map(inventoryMapper::toResponse));
     }
 
@@ -128,6 +141,43 @@ public class InventoryService {
                 product.getSku() + " " + before + " → " + after);
 
         return inventoryMapper.toResponse(saved);
+    }
+
+    @Transactional
+    public List<InventoryTransactionResponse> createBatch(InventoryBatchTransactionRequest request) {
+        List<InventoryTransactionLineRequest> lines = request.lines();
+        if (lines == null || lines.isEmpty()) {
+            throw new BusinessException("VALIDATION_ERROR", "At least one product line is required", HttpStatus.BAD_REQUEST);
+        }
+
+        Set<Long> seen = new HashSet<>();
+        for (InventoryTransactionLineRequest line : lines) {
+            if (line.productId() == null) {
+                throw new BusinessException("VALIDATION_ERROR", "productId is required on each line", HttpStatus.BAD_REQUEST);
+            }
+            if (!seen.add(line.productId())) {
+                throw new BusinessException(
+                        "VALIDATION_ERROR",
+                        "Duplicate product in batch: " + line.productId(),
+                        HttpStatus.BAD_REQUEST);
+            }
+        }
+
+        // Lock products in stable id order to reduce deadlock risk.
+        List<InventoryTransactionLineRequest> ordered = new ArrayList<>(lines);
+        ordered.sort(Comparator.comparing(InventoryTransactionLineRequest::productId));
+
+        List<InventoryTransactionResponse> results = new ArrayList<>(ordered.size());
+        for (InventoryTransactionLineRequest line : ordered) {
+            results.add(create(new InventoryTransactionRequest(
+                    line.productId(),
+                    request.transactionType(),
+                    line.quantity(),
+                    line.unitCost(),
+                    request.referenceNo(),
+                    request.notes())));
+        }
+        return results;
     }
 
     private LowStockProductResponse toLowStock(Product product) {

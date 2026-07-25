@@ -4,6 +4,7 @@ import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { PageResponse } from '../models/api.models';
 import {
+  InventoryBatchPayload,
   InventorySummary,
   InventoryTransaction,
   InventoryTransactionPayload,
@@ -60,6 +61,10 @@ export class InventoryApiService {
 
   create(payload: InventoryTransactionPayload): Observable<InventoryTransaction> {
     return this.http.post<InventoryTransaction>(`${this.base}/transactions`, payload);
+  }
+
+  createBatch(payload: InventoryBatchPayload): Observable<InventoryTransaction[]> {
+    return this.http.post<InventoryTransaction[]>(`${this.base}/transactions/batch`, payload);
   }
 
   lowStock(page = 0, size = 50): Observable<PageResponse<LowStockProduct>> {

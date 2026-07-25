@@ -10,6 +10,10 @@
     <button type="button" class="clear-filters" (click)="clearFilters()">Clear filters</button>
   </div>
 
+  @if (error()) {
+    <p class="error">{{ error() }}</p>
+  }
+
   <div class="table-wrap">
     <table>
       <thead>
@@ -63,7 +67,7 @@
             <td>{{ item.customerName || 'Walk-in' }}</td>
             <td>{{ item.paymentMethod }}</td>
             <td>{{ item.totalAmount | currency: 'PHP':'symbol-narrow':'1.2-2' }}</td>
-            <td>{{ item.cashierUsername }}</td>
+            <td>{{ item.cashierName || item.cashierUsername }}</td>
             <td class="actions">
               <a [routerLink]="['/sales', item.id]">Receipt</a>
             </td>

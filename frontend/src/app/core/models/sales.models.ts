@@ -24,6 +24,8 @@ export interface Sale {
   customerAddress?: string | null;
   customerPhone?: string | null;
   cashierUsername: string;
+  cashierName?: string | null;
+  receivedBy?: string | null;
   status: SaleStatus;
   paymentMethod: PaymentMethod;
   subtotal: number;
@@ -51,6 +53,8 @@ export interface CreateSalePayload {
   taxAmount: number;
   amountTendered?: number | null;
   notes?: string | null;
+  cashierName?: string | null;
+  receivedBy?: string | null;
   items: SaleItemPayload[];
 }
 

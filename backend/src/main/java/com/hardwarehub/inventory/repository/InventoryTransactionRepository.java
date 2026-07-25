@@ -25,8 +25,8 @@ public interface InventoryTransactionRepository extends JpaRepository<InventoryT
                    LOWER(COALESCE(t.referenceNo, '')) LIKE LOWER(CONCAT('%', :reference, '%')))
               AND (:createdBy IS NULL OR :createdBy = '' OR
                    LOWER(COALESCE(t.createdBy, '')) LIKE LOWER(CONCAT('%', :createdBy, '%')))
-              AND (:from IS NULL OR t.createdAt >= :from)
-              AND (:to IS NULL OR t.createdAt < :to)
+              AND t.createdAt >= :fromDate
+              AND t.createdAt < :toDate
               AND (:search IS NULL OR :search = '' OR
                    LOWER(t.product.sku) LIKE LOWER(CONCAT('%', :search, '%')) OR
                    LOWER(t.product.name) LIKE LOWER(CONCAT('%', :search, '%')) OR
@@ -39,7 +39,7 @@ public interface InventoryTransactionRepository extends JpaRepository<InventoryT
             @Param("product") String product,
             @Param("reference") String reference,
             @Param("createdBy") String createdBy,
-            @Param("from") Instant from,
-            @Param("to") Instant to,
+            @Param("fromDate") Instant from,
+            @Param("toDate") Instant to,
             Pageable pageable);
 }

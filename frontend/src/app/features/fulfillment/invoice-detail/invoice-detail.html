@@ -1,0 +1,171 @@
+@if (error() && !invoice()) {
+  <div class="hh-panel no-print"><p class="error">{{ error() }}</p><a routerLink="/fulfillment/invoices">Back to invoices</a></div>
+} @else if (invoice(); as inv) {
+  <div class="toolbar no-print">
+    <a routerLink="/fulfillment/invoices" class="ghost">Back</a>
+    <a [routerLink]="['/fulfillment/orders', inv.salesOrderId]" class="ghost">Sales order</a>
+    <button type="button" class="print-btn" (click)="print()">Print invoice</button>
+  </div>
+
+  @if (error()) {
+    <p class="error no-print">{{ error() }}</p>
+  }
+
+  @if (canRecordPayment()) {
+    <section class="hh-panel no-print payment-panel">
+      <h3>Record payment</h3>
+      <p class="due-banner">Amount due: ₱{{ inv.amountDue | number: '1.2-2' }}</p>
+      <form [formGroup]="paymentForm" (ngSubmit)="recordPayment()">
+        <label>Amount</label>
+        <input type="number" step="0.01" formControlName="amount" />
+        <label>Payment method</label>
+        <select formControlName="paymentMethod">
+          @for (m of paymentMethods; track m) {
+            <option [value]="m">{{ m }}</option>
+          }
+        </select>
+        <label>Reference no.</label>
+        <input formControlName="referenceNo" />
+        <label>Notes</label>
+        <textarea formControlName="notes" rows="2"></textarea>
+        <button type="submit" [disabled]="saving()">{{ saving() ? 'Saving…' : 'Record payment' }}</button>
+      </form>
+    </section>
+  }
+
+  <article class="invoice" id="printable-invoice">
+    <header class="invoice-header">
+      <div class="brand-block">
+        <div class="business-name">{{ store.businessName }}</div>
+        <div class="tagline">{{ store.tagline }}</div>
+        <div class="address">{{ store.address }}</div>
+        <div class="prop">{{ store.proprietor }}</div>
+        <div class="tin">{{ store.tinLabel }} {{ store.tin }}</div>
+        <div class="contact">{{ store.phone }} · {{ store.email }}</div>
+      </div>
+      <div class="doc-title-wrap">
+        <div class="doc-title">{{ store.documentTitle }}</div>
+        <div class="receipt-no">No. {{ inv.invoiceNumber }}</div>
+      </div>
+    </header>
+
+    <section class="party-grid">
+      <div class="field sold-to">
+        <span class="label">Sold to:</span>
+        <span class="value">{{ inv.customerName }}</span>
+      </div>
+      <div class="field">
+        <span class="label">Date:</span>
+        <span class="value">{{ inv.invoicedAt | date: 'MMM d, y' }}</span>
+      </div>
+      <div class="field">
+        <span class="label">TIN/SC-TIN:</span>
+        <span class="value">{{ inv.customerTin || '—' }}</span>
+      </div>
+      <div class="field">
+        <span class="label">Terms:</span>
+        <span class="value">{{ termsLabel(inv.paymentMethod) }}</span>
+      </div>
+      <div class="field">
+        <span class="label">Sales order:</span>
+        <span class="value">{{ inv.soNumber }}</span>
+      </div>
+      <div class="field">
+        <span class="label">Customer code:</span>
+        <span class="value">{{ inv.customerCode }}</span>
+      </div>
+      <div class="field full">
+        <span class="label">Address:</span>
+        <span class="value">{{ inv.customerAddress || (inv.customerPhone ? 'Tel. ' + inv.customerPhone : '—') }}</span>
+      </div>
+    </section>
+
+    <table class="items">
+      <thead>
+        <tr>
+          <th class="col-qty">QTY</th>
+          <th class="col-unit">UNIT</th>
+          <th class="col-item">ARTICLES</th>
+          <th class="col-price">UNIT PRICE</th>
+          <th class="col-amt">AMOUNT</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (row of tableRows(); track $index) {
+          <tr>
+            @if (row; as item) {
+              <td class="num">{{ item.quantity | number: '1.0-3' }}</td>
+              <td>{{ item.unit }}</td>
+              <td>
+                <div class="article">{{ item.productName }}</div>
+                <div class="sku">{{ item.productSku }}</div>
+              </td>
+              <td class="num">{{ item.unitPrice | number: '1.2-2' }}</td>
+              <td class="num">{{ item.lineTotal | number: '1.2-2' }}</td>
+            } @else {
+              <td>&nbsp;</td>
+              <td></td>
+              <td></td>
+              <td></td>
+              <td></td>
+            }
+          </tr>
+        }
+      </tbody>
+      <tfoot>
+        @if (inv.discountAmount > 0) {
+          <tr class="sub">
+            <td colspan="4" class="label-cell">Less: Discount</td>
+            <td class="num">{{ inv.discountAmount | number: '1.2-2' }}</td>
+          </tr>
+        }
+        @if (inv.taxAmount > 0) {
+          <tr class="sub">
+            <td colspan="4" class="label-cell">Add: Tax</td>
+            <td class="num">{{ inv.taxAmount | number: '1.2-2' }}</td>
+          </tr>
+        }
+        <tr class="total-row">
+          <td colspan="4" class="label-cell">TOTAL AMOUNT</td>
+          <td class="num total-amt">₱{{ inv.totalAmount | number: '1.2-2' }}</td>
+        </tr>
+        @if (inv.paymentMethod === 'CREDIT') {
+          <tr class="sub">
+            <td colspan="4" class="label-cell">Amount paid</td>
+            <td class="num">{{ inv.amountPaid | number: '1.2-2' }}</td>
+          </tr>
+          <tr class="sub">
+            <td colspan="4" class="label-cell">Amount due</td>
+            <td class="num">{{ inv.amountDue | number: '1.2-2' }}</td>
+          </tr>
+        }
+      </tfoot>
+    </table>
+
+    @if (inv.notes) {
+      <p class="notes">Notes: {{ inv.notes }}</p>
+    }
+
+    <section class="sign-row">
+      <div class="sign-box">
+        <div class="sign-name">{{ inv.createdBy || ' ' }}</div>
+        <div class="line"></div>
+        <div class="sign-label">Prepared by</div>
+      </div>
+      <div class="sign-box right">
+        <div class="sign-name">&nbsp;</div>
+        <div class="line"></div>
+        <div class="sign-label">Customer / Received by</div>
+      </div>
+    </section>
+
+    <footer class="legal">
+      <p class="bold">{{ store.disclaimer }}</p>
+      <p>{{ store.returnsNote }}</p>
+      <p class="small">{{ store.validityNote }}</p>
+      <p class="eoe">E. &amp; O. E.</p>
+    </footer>
+  </article>
+} @else {
+  <div class="hh-panel no-print"><p>Loading invoice…</p></div>
+}

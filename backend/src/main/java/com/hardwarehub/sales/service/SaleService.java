@@ -13,6 +13,7 @@ import com.hardwarehub.customer.repository.CustomerRepository;
 import com.hardwarehub.inventory.domain.InventoryTransactionType;
 import com.hardwarehub.inventory.dto.InventoryTransactionRequest;
 import com.hardwarehub.inventory.service.InventoryService;
+import com.hardwarehub.pricing.service.PricingService;
 import com.hardwarehub.sales.domain.PaymentMethod;
 import com.hardwarehub.sales.domain.Sale;
 import com.hardwarehub.sales.domain.SaleItem;
@@ -23,6 +24,8 @@ import com.hardwarehub.sales.dto.SaleResponse;
 import com.hardwarehub.sales.dto.SalesSummaryResponse;
 import com.hardwarehub.sales.mapper.SaleMapper;
 import com.hardwarehub.sales.repository.SaleRepository;
+import com.hardwarehub.user.domain.User;
+import com.hardwarehub.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -43,6 +46,10 @@ public class SaleService {
 
     private static final ZoneId STORE_ZONE = ZoneId.of("Asia/Manila");
     private static final DateTimeFormatter DAY_FMT = DateTimeFormatter.BASIC_ISO_DATE;
+    private static final Instant OPEN_RANGE_START = Instant.EPOCH;
+    private static final Instant OPEN_RANGE_END = Instant.parse("9999-12-31T23:59:59.999Z");
+    private static final BigDecimal OPEN_TOTAL_MIN = new BigDecimal("-999999999999.99");
+    private static final BigDecimal OPEN_TOTAL_MAX = new BigDecimal("999999999999.99");
 
     private final SaleRepository saleRepository;
     private final ProductRepository productRepository;
@@ -50,6 +57,8 @@ public class SaleService {
     private final InventoryService inventoryService;
     private final SaleMapper saleMapper;
     private final AuditService auditService;
+    private final UserRepository userRepository;
+    private final PricingService pricingService;
 
     @Transactional(readOnly = true)
     public PageResponse<SaleResponse> list(
@@ -65,6 +74,10 @@ public class SaleService {
             BigDecimal totalMin,
             BigDecimal totalMax,
             Pageable pageable) {
+        Instant soldFromDate = soldFrom != null ? soldFrom : OPEN_RANGE_START;
+        Instant soldToDate = soldTo != null ? soldTo : OPEN_RANGE_END;
+        BigDecimal minTotal = totalMin != null ? totalMin : OPEN_TOTAL_MIN;
+        BigDecimal maxTotal = totalMax != null ? totalMax : OPEN_TOTAL_MAX;
         return PageResponse.from(
                 saleRepository
                         .search(
@@ -75,23 +88,23 @@ public class SaleService {
                                 blankToNull(customer),
                                 blankToNull(cashier),
                                 paymentMethod,
-                                soldFrom,
-                                soldTo,
-                                totalMin,
-                                totalMax,
+                                soldFromDate,
+                                soldToDate,
+                                minTotal,
+                                maxTotal,
                                 pageable)
-                        .map(saleMapper::toResponse));
+                        .map(this::toResponse));
     }
 
     @Transactional(readOnly = true)
     public SaleResponse get(Long id) {
-        return saleMapper.toResponse(require(id));
+        return toResponse(require(id));
     }
 
     @Transactional(readOnly = true)
     public SaleResponse getByReceipt(String receiptNumber) {
         return saleRepository.findByReceiptNumber(receiptNumber)
-                .map(saleMapper::toResponse)
+                .map(this::toResponse)
                 .orElseThrow(() -> new ResourceNotFoundException("Sale not found: " + receiptNumber));
     }
 
@@ -125,6 +138,8 @@ public class SaleService {
         sale.setReceiptNumber(receiptNumber);
         sale.setCustomer(customer);
         sale.setCashierUsername(username);
+        sale.setCashierName(resolveCashierName(username, request.cashierName()));
+        sale.setReceivedBy(blankToNull(request.receivedBy()));
         sale.setStatus(SaleStatus.COMPLETED);
         sale.setPaymentMethod(request.paymentMethod());
         sale.setDiscountAmount(money(request.discountAmount()));
@@ -147,7 +162,9 @@ public class SaleService {
                 throw new BusinessException("VALIDATION_ERROR", "Item quantity must be greater than zero",
                         HttpStatus.BAD_REQUEST);
             }
-            BigDecimal unitPrice = line.unitPrice() == null ? product.getSellingPrice() : money(line.unitPrice());
+            BigDecimal unitPrice = line.unitPrice() == null
+                    ? money(pricingService.resolveUnitPrice(product, customer))
+                    : money(line.unitPrice());
             BigDecimal lineDiscount = money(line.lineDiscount());
             BigDecimal lineTotal = unitPrice.multiply(qty).setScale(2, RoundingMode.HALF_UP).subtract(lineDiscount);
             if (lineTotal.compareTo(BigDecimal.ZERO) < 0) {
@@ -188,7 +205,56 @@ public class SaleService {
         Sale saved = saleRepository.save(sale);
         auditService.log("CREATE", "SALE", String.valueOf(saved.getId()),
                 "Sale " + receiptNumber + " total=" + saved.getTotalAmount());
-        return saleMapper.toResponse(require(saved.getId()));
+        return toResponse(require(saved.getId()));
+    }
+
+    private SaleResponse toResponse(Sale sale) {
+        SaleResponse mapped = saleMapper.toResponse(sale);
+        if (mapped.cashierName() != null && !mapped.cashierName().isBlank()) {
+            return mapped;
+        }
+        String resolved = resolveCashierName(sale.getCashierUsername(), null);
+        return new SaleResponse(
+                mapped.id(),
+                mapped.receiptNumber(),
+                mapped.customerId(),
+                mapped.customerCode(),
+                mapped.customerName(),
+                mapped.customerTin(),
+                mapped.customerAddress(),
+                mapped.customerPhone(),
+                mapped.cashierUsername(),
+                resolved,
+                mapped.receivedBy(),
+                mapped.status(),
+                mapped.paymentMethod(),
+                mapped.subtotal(),
+                mapped.discountAmount(),
+                mapped.taxAmount(),
+                mapped.totalAmount(),
+                mapped.amountTendered(),
+                mapped.changeAmount(),
+                mapped.notes(),
+                mapped.soldAt(),
+                mapped.items());
+    }
+
+    private String resolveCashierName(String username, String override) {
+        String custom = blankToNull(override);
+        if (custom != null) {
+            return custom;
+        }
+        return userRepository
+                .findByUsernameAndDeletedAtIsNull(username)
+                .map(this::formatUserName)
+                .orElse(username);
+    }
+
+    private String formatUserName(User user) {
+        String first = user.getFirstName() == null ? "" : user.getFirstName().trim();
+        String last = user.getLastName() == null ? "" : user.getLastName().trim();
+        String full = (first + " " + last).trim();
+        return full.isEmpty() ? user.getUsername() : full;
     }
 
     private void applyPayment(Sale sale, CreateSaleRequest request, Customer customer) {
@@ -236,7 +302,9 @@ public class SaleService {
             }
             return null;
         }
-        Customer customer = customerRepository.findByIdAndDeletedAtIsNull(customerId)
+        Customer customer = (paymentMethod == PaymentMethod.CREDIT
+                        ? customerRepository.findByIdForUpdate(customerId)
+                        : customerRepository.findByIdAndDeletedAtIsNull(customerId))
                 .orElseThrow(() -> new ResourceNotFoundException("Customer not found: " + customerId));
         if (customer.getStatus() != CustomerStatus.ACTIVE) {
             throw new BusinessException("CUSTOMER_INACTIVE", "Customer is not active for sales", HttpStatus.BAD_REQUEST);

@@ -1,0 +1,101 @@
+@if (error()) {
+  <div class="hh-panel no-print"><p class="error">{{ error() }}</p><a routerLink="/fulfillment/orders">Back to orders</a></div>
+} @else if (delivery(); as d) {
+  <div class="toolbar no-print">
+    <a [routerLink]="['/fulfillment/orders', d.salesOrderId]" class="ghost">Back to SO</a>
+    <button type="button" class="print-btn" (click)="print()">Print DR</button>
+  </div>
+
+  <article class="invoice" id="printable-dr">
+    <header class="invoice-header">
+      <div class="brand-block">
+        <div class="business-name">{{ store.businessName }}</div>
+        <div class="tagline">{{ store.tagline }}</div>
+        <div class="address">{{ store.address }}</div>
+        <div class="prop">{{ store.proprietor }}</div>
+        <div class="tin">{{ store.tinLabel }} {{ store.tin }}</div>
+        <div class="contact">{{ store.phone }} · {{ store.email }}</div>
+      </div>
+      <div class="doc-title-wrap">
+        <div class="doc-title">{{ store.documentTitle }}</div>
+        <div class="receipt-no">No. {{ d.drNumber }}</div>
+      </div>
+    </header>
+
+    <section class="party-grid">
+      <div class="field sold-to">
+        <span class="label">Delivered to:</span>
+        <span class="value">{{ d.customerName }}</span>
+      </div>
+      <div class="field">
+        <span class="label">Date:</span>
+        <span class="value">{{ d.deliveredAt | date: 'MMM d, y' }}</span>
+      </div>
+      <div class="field">
+        <span class="label">Sales order:</span>
+        <span class="value">{{ d.soNumber }}</span>
+      </div>
+      <div class="field">
+        <span class="label">Customer code:</span>
+        <span class="value">{{ d.customerCode }}</span>
+      </div>
+    </section>
+
+    <table class="items">
+      <thead>
+        <tr>
+          <th class="col-qty">QTY</th>
+          <th class="col-unit">UNIT</th>
+          <th class="col-item">ARTICLES</th>
+          <th class="col-price">UNIT PRICE</th>
+          <th class="col-amt">AMOUNT</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (row of tableRows(); track $index) {
+          <tr>
+            @if (row; as item) {
+              <td class="num">{{ item.quantity | number: '1.0-3' }}</td>
+              <td>{{ item.unit }}</td>
+              <td>
+                <div class="article">{{ item.productName }}</div>
+                <div class="sku">{{ item.productSku }}</div>
+              </td>
+              <td class="num">{{ item.unitPrice | number: '1.2-2' }}</td>
+              <td class="num">{{ item.quantity * item.unitPrice | number: '1.2-2' }}</td>
+            } @else {
+              <td>&nbsp;</td>
+              <td></td>
+              <td></td>
+              <td></td>
+              <td></td>
+            }
+          </tr>
+        }
+      </tbody>
+    </table>
+
+    @if (d.notes) {
+      <p class="notes">Notes: {{ d.notes }}</p>
+    }
+
+    <section class="sign-row">
+      <div class="sign-box">
+        <div class="sign-name">{{ d.createdBy || ' ' }}</div>
+        <div class="line"></div>
+        <div class="sign-label">Delivered by</div>
+      </div>
+      <div class="sign-box right">
+        <div class="sign-name">&nbsp;</div>
+        <div class="line"></div>
+        <div class="sign-label">Received by</div>
+      </div>
+    </section>
+
+    <footer class="legal">
+      <p class="eoe">E. &amp; O. E.</p>
+    </footer>
+  </article>
+} @else {
+  <div class="hh-panel no-print"><p>Loading delivery receipt…</p></div>
+}

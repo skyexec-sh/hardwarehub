@@ -2,7 +2,9 @@ import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { CustomerApiService } from '../../../core/services/customer-api.service';
+import { PricingApiService } from '../../../core/services/pricing-api.service';
 import { CustomerStatus } from '../../../core/models/customer.models';
+import { PriceLevel } from '../../../core/models/pricing.models';
 
 @Component({
   selector: 'app-customer-form',
@@ -15,11 +17,13 @@ export class CustomerFormComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly api = inject(CustomerApiService);
+  private readonly pricingApi = inject(PricingApiService);
 
   readonly isEdit = signal(false);
   readonly id = signal<number | null>(null);
   readonly error = signal<string | null>(null);
   readonly outstandingBalance = signal(0);
+  readonly priceLevels = signal<PriceLevel[]>([]);
   readonly statuses: CustomerStatus[] = ['ACTIVE', 'INACTIVE', 'ON_HOLD'];
 
   readonly form = this.fb.nonNullable.group({
@@ -34,10 +38,21 @@ export class CustomerFormComponent implements OnInit {
     taxIdentificationNumber: [''],
     notes: [''],
     creditLimit: [0, Validators.required],
+    priceLevelId: [''],
     status: ['ACTIVE' as CustomerStatus, Validators.required],
   });
 
   ngOnInit(): void {
+    this.pricingApi.listLevels(true).subscribe({
+      next: (levels) => {
+        this.priceLevels.set(levels);
+        const retail = levels.find((l) => l.code === 'RETAIL');
+        if (retail && !this.form.controls.priceLevelId.value) {
+          this.form.patchValue({ priceLevelId: String(retail.id) });
+        }
+      },
+    });
+
     const raw = this.route.snapshot.paramMap.get('id');
     if (raw && raw !== 'new') {
       const id = Number(raw);
@@ -58,6 +73,7 @@ export class CustomerFormComponent implements OnInit {
             taxIdentificationNumber: item.taxIdentificationNumber ?? '',
             notes: item.notes ?? '',
             creditLimit: item.creditLimit,
+            priceLevelId: item.priceLevelId ? String(item.priceLevelId) : '',
             status: item.status,
           });
         },
@@ -84,6 +100,7 @@ export class CustomerFormComponent implements OnInit {
       taxIdentificationNumber: value.taxIdentificationNumber || null,
       notes: value.notes || null,
       creditLimit: Number(value.creditLimit),
+      priceLevelId: value.priceLevelId ? Number(value.priceLevelId) : null,
       status: value.status,
     };
 

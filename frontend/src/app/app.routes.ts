@@ -2,6 +2,7 @@ import { Routes } from '@angular/router';
 import { authGuard, guestGuard, roleGuard } from './core/auth/auth.guard';
 
 const catalogRoles = ['OWNER', 'ADMIN', 'MANAGER', 'INVENTORY_STAFF'] as const;
+const salesWriteRoles = ['OWNER', 'ADMIN', 'MANAGER', 'CASHIER'] as const;
 
 export const routes: Routes = [
   {
@@ -94,6 +95,14 @@ export const routes: Routes = [
           import('./features/catalog/brand-form/brand-form').then((m) => m.BrandFormComponent),
       },
       {
+        path: 'price-levels',
+        canActivate: [roleGuard([...catalogRoles])],
+        loadComponent: () =>
+          import('./features/pricing/price-level-list/price-level-list').then(
+            (m) => m.PriceLevelListComponent,
+          ),
+      },
+      {
         path: 'products',
         canActivate: [authGuard],
         loadComponent: () =>
@@ -177,6 +186,64 @@ export const routes: Routes = [
         canActivate: [authGuard],
         loadComponent: () =>
           import('./features/sales/sale-receipt/sale-receipt').then((m) => m.SaleReceiptComponent),
+      },
+      {
+        path: 'fulfillment/quotes',
+        canActivate: [authGuard],
+        loadComponent: () =>
+          import('./features/fulfillment/quote-list/quote-list').then((m) => m.QuoteListComponent),
+      },
+      {
+        path: 'fulfillment/quotes/new',
+        canActivate: [roleGuard([...salesWriteRoles])],
+        loadComponent: () =>
+          import('./features/fulfillment/quote-form/quote-form').then((m) => m.QuoteFormComponent),
+      },
+      {
+        path: 'fulfillment/quotes/:id/edit',
+        canActivate: [roleGuard([...salesWriteRoles])],
+        loadComponent: () =>
+          import('./features/fulfillment/quote-form/quote-form').then((m) => m.QuoteFormComponent),
+      },
+      {
+        path: 'fulfillment/quotes/:id',
+        canActivate: [authGuard],
+        loadComponent: () =>
+          import('./features/fulfillment/quote-detail/quote-detail').then((m) => m.QuoteDetailComponent),
+      },
+      {
+        path: 'fulfillment/orders',
+        canActivate: [authGuard],
+        loadComponent: () =>
+          import('./features/fulfillment/order-list/order-list').then((m) => m.OrderListComponent),
+      },
+      {
+        path: 'fulfillment/orders/:id',
+        canActivate: [authGuard],
+        loadComponent: () =>
+          import('./features/fulfillment/order-detail/order-detail').then((m) => m.OrderDetailComponent),
+      },
+      {
+        path: 'fulfillment/deliveries/:id',
+        canActivate: [authGuard],
+        loadComponent: () =>
+          import('./features/fulfillment/delivery-detail/delivery-detail').then(
+            (m) => m.DeliveryDetailComponent,
+          ),
+      },
+      {
+        path: 'fulfillment/invoices',
+        canActivate: [authGuard],
+        loadComponent: () =>
+          import('./features/fulfillment/invoice-list/invoice-list').then((m) => m.InvoiceListComponent),
+      },
+      {
+        path: 'fulfillment/invoices/:id',
+        canActivate: [authGuard],
+        loadComponent: () =>
+          import('./features/fulfillment/invoice-detail/invoice-detail').then(
+            (m) => m.InvoiceDetailComponent,
+          ),
       },
     ],
   },

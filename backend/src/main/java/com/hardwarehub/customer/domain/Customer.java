@@ -4,9 +4,12 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
@@ -61,6 +64,10 @@ public class Customer {
 
     @Column(name = "outstanding_balance", nullable = false, precision = 14, scale = 2)
     private BigDecimal outstandingBalance = BigDecimal.ZERO;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "price_level_id")
+    private com.hardwarehub.pricing.domain.PriceLevel priceLevel;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 30)

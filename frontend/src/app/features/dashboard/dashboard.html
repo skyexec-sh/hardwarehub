@@ -40,11 +40,35 @@
       </div>
     </div>
   </article>
-  <article class="hh-stat-card red">
+  <article class="hh-stat-card teal">
     <div class="icon-wrap"><mat-icon>request_quote</mat-icon></div>
     <div class="meta">
       <div class="label">Pending Quotes</div>
-      <div class="value">—</div>
+      <div class="value">
+        @if (pendingQuotes() === null) {
+          —
+        } @else {
+          <a routerLink="/fulfillment/quotes">{{ pendingQuotes() }}</a>
+        }
+      </div>
+    </div>
+  </article>
+  <article class="hh-stat-card red">
+    <div class="icon-wrap"><mat-icon>account_balance_wallet</mat-icon></div>
+    <div class="meta">
+      <div class="label">Credit Receivables</div>
+      <div class="value">
+        @if (creditOutstanding() === null) {
+          —
+        } @else {
+          <a routerLink="/customers" [queryParams]="{ balanceDue: '1' }">
+            {{ creditOutstanding() | currency: 'PHP':'symbol-narrow':'1.2-2' }}
+          </a>
+        }
+      </div>
+      @if (creditDueCount() !== null) {
+        <div class="sub">{{ creditDueCount() }} customer{{ creditDueCount() === 1 ? '' : 's' }} with balance</div>
+      }
     </div>
   </article>
 </section>
@@ -53,15 +77,15 @@
   <div class="hh-panel">
     <h3>Getting started</h3>
     <p>
-      Milestone 5 is live: ring up walk-in or credit sales in <strong>POS</strong>, print receipts, and see
-      today’s totals on this dashboard. Stock is deducted automatically on checkout.
+      Milestone 8 is live: create quotations, convert to sales orders, post partial deliveries (DR),
+      and invoice delivered quantities — including credit invoices with payment collection.
     </p>
   </div>
   <div class="hh-panel">
     <h3>Next modules</h3>
     <ul>
-      <li>Quotations &amp; PDF export</li>
-      <li>Reports dashboard widgets</li>
+      <li>Catalog intelligence &amp; reports</li>
+      <li>Stock prediction &amp; production readiness</li>
     </ul>
   </div>
 </section>

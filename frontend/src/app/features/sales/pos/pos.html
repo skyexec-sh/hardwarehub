@@ -68,7 +68,15 @@
                   (change)="setQty(line.productId, $any($event.target).value)"
                 />
               </td>
-              <td>{{ line.unitPrice | currency: 'PHP':'symbol-narrow':'1.2-2' }}</td>
+              <td>
+                <input
+                  class="qty"
+                  type="number"
+                  step="0.01"
+                  [value]="line.unitPrice"
+                  (change)="setUnitPrice(line.productId, $any($event.target).value)"
+                />
+              </td>
               <td>
                 <input
                   class="qty"
@@ -89,23 +97,33 @@
     </div>
 
     <div class="checkout-grid">
-      <label>
-        Customer (optional)
-        <select [formControl]="customerId">
+      <div class="field">
+        <label for="pos-customer">Customer (optional)</label>
+        <select id="pos-customer" [formControl]="customerId">
           <option value="">Walk-in</option>
           @for (c of customers(); track c.id) {
             <option [value]="c.id">{{ c.customerCode }} — {{ c.businessName }}</option>
           }
         </select>
-      </label>
-      <label>
-        Payment
-        <select [formControl]="paymentMethod">
+        <div class="field-meta">
+          <span>Price level · {{ activePriceLevel() }}</span>
+          @if (method() === 'CREDIT' && selectedCustomer(); as c) {
+            <span>
+              Due {{ c.outstandingBalance | currency: 'PHP':'symbol-narrow':'1.2-2' }}
+              · Available {{ availableCredit() | currency: 'PHP':'symbol-narrow':'1.2-2' }}
+            </span>
+          }
+        </div>
+      </div>
+      <div class="field">
+        <label for="pos-payment">Payment</label>
+        <select id="pos-payment" [formControl]="paymentMethod">
           <option value="CASH">Cash</option>
           <option value="CARD">Card</option>
           <option value="CREDIT">Credit</option>
         </select>
-      </label>
+        <div class="field-meta field-meta-spacer" aria-hidden="true">&nbsp;</div>
+      </div>
       <label>
         Sale discount
         <input type="number" step="0.01" [formControl]="discountAmount" />
@@ -121,6 +139,14 @@
         </label>
         <div class="totals-line">Change: <strong>{{ change() | currency: 'PHP':'symbol-narrow':'1.2-2' }}</strong></div>
       }
+      <label>
+        Cashier / Authorized rep.
+        <input [formControl]="cashierName" placeholder="Account name on invoice" />
+      </label>
+      <label>
+        Received by (optional)
+        <input [formControl]="receivedBy" placeholder="Customer / receiver name" />
+      </label>
       <label class="full">
         Notes
         <input [formControl]="notes" />

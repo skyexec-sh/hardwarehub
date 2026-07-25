@@ -26,6 +26,29 @@ export interface InventoryTransactionPayload {
   notes?: string | null;
 }
 
+export interface InventoryBatchLinePayload {
+  productId: number;
+  quantity: number;
+  unitCost?: number | null;
+}
+
+export interface InventoryBatchPayload {
+  transactionType: InventoryTransactionType;
+  referenceNo?: string | null;
+  notes?: string | null;
+  lines: InventoryBatchLinePayload[];
+}
+
+export interface InventoryMovementLine {
+  productId: number;
+  sku: string;
+  name: string;
+  unit: string;
+  stock: number;
+  quantity: number;
+  unitCost: number | null;
+}
+
 export interface LowStockProduct {
   productId: number;
   sku: string;

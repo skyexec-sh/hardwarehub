@@ -1,8 +1,8 @@
 import { CurrencyPipe, DatePipe } from '@angular/common';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
-import { merge } from 'rxjs';
+import { NavigationEnd, Router, RouterLink } from '@angular/router';
+import { filter, merge } from 'rxjs';
 import { debounceTime } from 'rxjs/operators';
 import { SalesApiService } from '../../../core/services/sales-api.service';
 import { PaymentMethod, Sale, SaleStatus } from '../../../core/models/sales.models';
@@ -16,8 +16,10 @@ import { dayEndExclusiveIso, dayStartIso } from '../../../core/util/date-filters
 })
 export class SaleListComponent implements OnInit {
   private readonly api = inject(SalesApiService);
+  private readonly router = inject(Router);
 
   readonly items = signal<Sale[]>([]);
+  readonly error = signal<string | null>(null);
   readonly receipt = new FormControl('', { nonNullable: true });
   readonly soldFrom = new FormControl('', { nonNullable: true });
   readonly soldTo = new FormControl('', { nonNullable: true });
@@ -43,6 +45,14 @@ export class SaleListComponent implements OnInit {
     )
       .pipe(debounceTime(300))
       .subscribe(() => this.load());
+
+    this.router.events
+      .pipe(filter((e): e is NavigationEnd => e instanceof NavigationEnd))
+      .subscribe((e) => {
+        if (e.urlAfterRedirects === '/sales' || e.urlAfterRedirects.startsWith('/sales?')) {
+          this.load();
+        }
+      });
   }
 
   clearFilters(): void {
@@ -60,6 +70,7 @@ export class SaleListComponent implements OnInit {
   load(): void {
     const min = this.totalMin.value.trim() ? Number(this.totalMin.value) : null;
     const max = this.totalMax.value.trim() ? Number(this.totalMax.value) : null;
+    this.error.set(null);
     this.api
       .list({
         receipt: this.receipt.value,
@@ -71,7 +82,14 @@ export class SaleListComponent implements OnInit {
         soldTo: dayEndExclusiveIso(this.soldTo.value),
         totalMin: min,
         totalMax: max,
+        size: 50,
       })
-      .subscribe({ next: (page) => this.items.set(page.content) });
+      .subscribe({
+        next: (page) => this.items.set(page.content),
+        error: (err) => {
+          this.items.set([]);
+          this.error.set(err?.error?.message || 'Unable to load sales');
+        },
+      });
   }
 }

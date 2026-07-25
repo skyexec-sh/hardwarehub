@@ -1,53 +1,338 @@
 @if (customer(); as c) {
   <div class="header">
     <div>
-      <h2 style="margin:0">{{ c.businessName }}</h2>
+      <h2>{{ c.businessName }}</h2>
       <p class="page-subtitle">
-        {{ c.customerCode }} · Outstanding: ₱{{ c.outstandingBalance }} / Credit limit: ₱{{ c.creditLimit }}
+        {{ c.customerCode }} · Due
+        <strong [class.due]="c.outstandingBalance > 0">{{
+          c.outstandingBalance | currency: 'PHP':'symbol-narrow':'1.2-2'
+        }}</strong>
+        · Limit {{ c.creditLimit | currency: 'PHP':'symbol-narrow':'1.2-2' }} · Available
+        {{ availableCredit() | currency: 'PHP':'symbol-narrow':'1.2-2' }}
       </p>
     </div>
-    <a class="create-btn" [routerLink]="['/customers', c.id]">Edit customer</a>
+    <div class="header-actions">
+      <a class="ghost" [routerLink]="['/customers', c.id]">Edit</a>
+      <a class="create-btn" routerLink="/sales/pos">Open POS</a>
+    </div>
   </div>
+
+  <nav class="tabs">
+    <button type="button" [class.active]="tab() === 'overview'" (click)="setTab('overview')">Overview</button>
+    <button type="button" [class.active]="tab() === 'ledger'" (click)="setTab('ledger')">Ledger</button>
+    <button type="button" [class.active]="tab() === 'payments'" (click)="setTab('payments')">Payments</button>
+    <button type="button" [class.active]="tab() === 'soa'" (click)="setTab('soa')">SOA</button>
+    <button type="button" [class.active]="tab() === 'purchases'" (click)="setTab('purchases')">Purchases</button>
+  </nav>
+
+  @if (error()) {
+    <p class="error screen-only">{{ error() }}</p>
+  }
+
+  @if (tab() === 'overview') {
+    <div class="overview-grid">
+      <section class="hh-panel">
+        <h3>Account snapshot</h3>
+        <dl class="snapshot">
+          <div><dt>Status</dt><dd>{{ c.status }}</dd></div>
+          <div><dt>Contact</dt><dd>{{ c.contactPerson || '—' }}</dd></div>
+          <div><dt>Phone</dt><dd>{{ c.phone || '—' }}</dd></div>
+          <div><dt>City</dt><dd>{{ c.city || '—' }}</dd></div>
+          <div>
+            <dt>Outstanding</dt>
+            <dd [class.due]="c.outstandingBalance > 0">
+              {{ c.outstandingBalance | currency: 'PHP':'symbol-narrow':'1.2-2' }}
+            </dd>
+          </div>
+          <div>
+            <dt>Available credit</dt>
+            <dd>{{ availableCredit() | currency: 'PHP':'symbol-narrow':'1.2-2' }}</dd>
+          </div>
+        </dl>
+      </section>
+
+      <section class="hh-panel">
+        <h3>Record payment</h3>
+        @if (c.outstandingBalance <= 0) {
+          <p class="page-subtitle">No balance due.</p>
+        } @else {
+          <form [formGroup]="paymentForm" (ngSubmit)="submitPayment()" class="pay-form">
+            <label>
+              Amount
+              <input type="number" step="0.01" formControlName="amount" />
+            </label>
+            <label>
+              Method
+              <select formControlName="paymentMethod">
+                @for (m of paymentMethods; track m) {
+                  <option [value]="m">{{ methodLabel(m) }}</option>
+                }
+              </select>
+            </label>
+            <label>
+              Reference
+              <input formControlName="referenceNo" placeholder="OR / deposit slip #" />
+            </label>
+            <label class="full">
+              Notes
+              <input formControlName="notes" />
+            </label>
+            <button type="submit" class="save" [disabled]="saving()">
+              {{ saving() ? 'Saving…' : 'Post payment' }}
+            </button>
+          </form>
+        }
+      </section>
+    </div>
+  }
+
+  @if (tab() === 'ledger') {
+    <div class="hh-panel table-panel">
+      <div class="toolbar"><strong>Credit ledger</strong></div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Type</th>
+              <th>Reference</th>
+              <th>Description</th>
+              <th class="num">Charge</th>
+              <th class="num">Payment</th>
+              <th class="num">Balance</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (row of ledger(); track $index) {
+              <tr>
+                <td>{{ row.occurredAt | date: 'medium' }}</td>
+                <td>
+                  <span class="pill" [class.charge]="row.entryType === 'CHARGE'" [class.pay]="row.entryType === 'PAYMENT'">
+                    {{ row.entryType }}
+                  </span>
+                </td>
+                <td>
+                  @if (row.saleId) {
+                    <a [routerLink]="['/sales', row.saleId]">{{ row.reference }}</a>
+                  } @else {
+                    {{ row.reference }}
+                  }
+                </td>
+                <td>{{ row.description }}</td>
+                <td class="num">
+                  @if (row.chargeAmount > 0) {
+                    {{ row.chargeAmount | currency: 'PHP':'symbol-narrow':'1.2-2' }}
+                  } @else {
+                    —
+                  }
+                </td>
+                <td class="num">
+                  @if (row.paymentAmount > 0) {
+                    {{ row.paymentAmount | currency: 'PHP':'symbol-narrow':'1.2-2' }}
+                  } @else {
+                    —
+                  }
+                </td>
+                <td class="num">{{ row.runningBalance | currency: 'PHP':'symbol-narrow':'1.2-2' }}</td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="7" class="empty">No credit charges or payments yet.</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  }
+
+  @if (tab() === 'payments') {
+    <div class="hh-panel table-panel">
+      <div class="toolbar">
+        <strong>Payment history</strong>
+        @if (c.outstandingBalance > 0) {
+          <button type="button" class="ghost-btn" (click)="setTab('overview')">Record payment</button>
+        }
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Payment #</th>
+              <th>Date</th>
+              <th>Method</th>
+              <th>Reference</th>
+              <th class="num">Amount</th>
+              <th class="num">Balance after</th>
+              <th>By</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (p of payments(); track p.id) {
+              <tr>
+                <td>{{ p.paymentNumber }}</td>
+                <td>{{ p.paidAt | date: 'medium' }}</td>
+                <td>{{ methodLabel(p.paymentMethod) }}</td>
+                <td>{{ p.referenceNo || '—' }}</td>
+                <td class="num">{{ p.amount | currency: 'PHP':'symbol-narrow':'1.2-2' }}</td>
+                <td class="num">{{ p.balanceAfter | currency: 'PHP':'symbol-narrow':'1.2-2' }}</td>
+                <td>{{ p.createdBy || '—' }}</td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="7" class="empty">No payments recorded yet.</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  }
+
+  @if (tab() === 'soa') {
+    <div class="screen-only soa-controls hh-panel">
+      <form [formGroup]="soaForm" class="soa-form" (ngSubmit)="loadStatement()">
+        <label>
+          From
+          <input type="date" formControlName="from" />
+        </label>
+        <label>
+          To
+          <input type="date" formControlName="to" />
+        </label>
+        <button type="submit" class="ghost-btn">Refresh</button>
+        <button type="button" class="print-btn" (click)="printSoa()" [disabled]="!statement()">Print SOA</button>
+      </form>
+    </div>
+
+    @if (statement(); as soa) {
+      <article class="soa-doc">
+        <header class="soa-header">
+          <div class="business-name">{{ store.businessName }}</div>
+          <div class="tagline">{{ store.tagline }}</div>
+          <div class="address">{{ store.address }}</div>
+          <div class="contact">{{ store.phone }} · {{ store.email }}</div>
+          <h1>STATEMENT OF ACCOUNT</h1>
+        </header>
+
+        <section class="soa-meta">
+          <div>
+            <strong>Customer</strong>
+            <div>{{ soa.businessName }}</div>
+            <div>{{ soa.customerCode }}</div>
+            @if (soa.address) {
+              <div>{{ soa.address }}</div>
+            }
+            @if (soa.city || soa.province) {
+              <div>{{ soa.city }}{{ soa.city && soa.province ? ', ' : '' }}{{ soa.province }}</div>
+            }
+            @if (soa.phone) {
+              <div>{{ soa.phone }}</div>
+            }
+          </div>
+          <div class="right">
+            <div>
+              Period:
+              {{ soaForm.controls.from.value }}
+              –
+              {{ soaForm.controls.to.value }}
+            </div>
+            <div>Credit limit: {{ soa.creditLimit | currency: 'PHP':'symbol-narrow':'1.2-2' }}</div>
+            <div>Current due: {{ soa.currentOutstanding | currency: 'PHP':'symbol-narrow':'1.2-2' }}</div>
+          </div>
+        </section>
+
+        <table class="soa-table">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Reference</th>
+              <th>Description</th>
+              <th class="num">Charges</th>
+              <th class="num">Payments</th>
+              <th class="num">Balance</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="opening">
+              <td colspan="3">Opening balance</td>
+              <td class="num">—</td>
+              <td class="num">—</td>
+              <td class="num">{{ soa.openingBalance | currency: 'PHP':'symbol-narrow':'1.2-2' }}</td>
+            </tr>
+            @for (line of soa.lines; track $index) {
+              <tr>
+                <td>{{ line.occurredAt | date: 'mediumDate' }}</td>
+                <td>{{ line.reference }}</td>
+                <td>{{ line.description }}</td>
+                <td class="num">
+                  @if (line.chargeAmount > 0) {
+                    {{ line.chargeAmount | currency: 'PHP':'symbol-narrow':'1.2-2' }}
+                  }
+                </td>
+                <td class="num">
+                  @if (line.paymentAmount > 0) {
+                    {{ line.paymentAmount | currency: 'PHP':'symbol-narrow':'1.2-2' }}
+                  }
+                </td>
+                <td class="num">{{ line.runningBalance | currency: 'PHP':'symbol-narrow':'1.2-2' }}</td>
+              </tr>
+            }
+          </tbody>
+          <tfoot>
+            <tr>
+              <td colspan="3">Totals / closing balance</td>
+              <td class="num">{{ soa.totalCharges | currency: 'PHP':'symbol-narrow':'1.2-2' }}</td>
+              <td class="num">{{ soa.totalPayments | currency: 'PHP':'symbol-narrow':'1.2-2' }}</td>
+              <td class="num">{{ soa.closingBalance | currency: 'PHP':'symbol-narrow':'1.2-2' }}</td>
+            </tr>
+          </tfoot>
+        </table>
+
+        <p class="soa-foot">Please settle outstanding balances promptly. Thank you for your business.</p>
+      </article>
+    }
+  }
+
+  @if (tab() === 'purchases') {
+    <div class="hh-panel table-panel">
+      <div class="toolbar"><strong>Purchase history</strong></div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Receipt</th>
+              <th>Date</th>
+              <th>Payment</th>
+              <th class="num">Amount</th>
+              <th>Status</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (row of history(); track row.saleId) {
+              <tr>
+                <td>{{ row.receiptNumber }}</td>
+                <td>{{ row.soldAt | date: 'medium' }}</td>
+                <td>{{ methodLabel(row.paymentMethod) }}</td>
+                <td class="num">{{ row.totalAmount | currency: 'PHP':'symbol-narrow':'1.2-2' }}</td>
+                <td>{{ row.status }}</td>
+                <td class="actions">
+                  <a [routerLink]="['/sales', row.saleId]">Receipt</a>
+                </td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="6" class="empty">No purchases yet.</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  }
 }
 
-<div class="hh-panel table-panel">
-  <div class="toolbar">
-    <strong>Purchase history</strong>
-  </div>
-  <div class="table-wrap">
-    <table>
-      <thead>
-        <tr>
-          <th>Receipt</th>
-          <th>Date</th>
-          <th>Amount</th>
-          <th>Status</th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody>
-        @for (row of history(); track row.saleId) {
-          <tr>
-            <td>{{ row.receiptNumber }}</td>
-            <td>{{ row.soldAt | date: 'medium' }}</td>
-            <td>₱{{ row.totalAmount }}</td>
-            <td>{{ row.status }}</td>
-            <td class="actions">
-              <a [routerLink]="['/sales', row.saleId]">Receipt</a>
-            </td>
-          </tr>
-        } @empty {
-          <tr>
-            <td colspan="5" class="empty">
-              No purchases yet. Ring up a credit or cash sale for this customer in POS.
-            </td>
-          </tr>
-        }
-      </tbody>
-    </table>
-  </div>
-</div>
-
-<p style="margin-top:1rem">
+<p class="screen-only back-link">
   <a routerLink="/customers">← Back to customers</a>
 </p>

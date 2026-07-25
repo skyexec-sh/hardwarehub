@@ -11,6 +11,7 @@ public record CustomerPurchaseHistoryItem(
         String receiptNumber,
         Instant soldAt,
         BigDecimal totalAmount,
+        String paymentMethod,
         String status
 ) {
 }

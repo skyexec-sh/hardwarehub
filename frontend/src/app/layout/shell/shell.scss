@@ -154,9 +154,37 @@
   line-height: 1.2;
 }
 
-.topbar-title span {
-  color: var(--hh-muted);
+.crumbs {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.28rem;
+  margin-top: 0.12rem;
   font-size: 0.75rem;
+  color: var(--hh-muted);
+}
+
+.crumbs a {
+  color: var(--hh-primary-deep);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.crumbs a:hover {
+  text-decoration: underline;
+}
+
+.crumb-muted {
+  color: #9aa3ad;
+}
+
+.crumb-current {
+  color: #666;
+  font-weight: 600;
+}
+
+.sep {
+  color: #c5cbd1;
 }
 
 .user-btn {
