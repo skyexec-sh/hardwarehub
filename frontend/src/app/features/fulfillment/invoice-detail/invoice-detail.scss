@@ -1,0 +1,45 @@
+@use '../../sales/sale-receipt/sale-receipt.scss';
+
+.payment-panel {
+  max-width: 480px;
+  margin-bottom: 1rem;
+}
+
+.payment-panel label {
+  display: block;
+  font-size: 0.78rem;
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+}
+
+.payment-panel input,
+.payment-panel select,
+.payment-panel textarea {
+  width: 100%;
+  border: 1px solid #d9d9d9;
+  border-radius: 6px;
+  padding: 0.5rem 0.65rem;
+  font: inherit;
+  margin-bottom: 0.65rem;
+}
+
+.payment-panel button {
+  border: none;
+  border-radius: 6px;
+  padding: 0.55rem 0.9rem;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  background: linear-gradient(90deg, #1dc7ea, #1f77d0);
+  color: #fff;
+}
+
+.payment-panel button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.due-banner {
+  font-weight: 700;
+  margin: 0 0 0.75rem;
+}

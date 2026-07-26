@@ -1,0 +1,61 @@
+<div class="header">
+  <div>
+    <h2>Price levels</h2>
+    <p class="page-subtitle">
+      Retail, Contractor, and VIP drive POS unit prices. Assign a default level on each customer.
+    </p>
+  </div>
+</div>
+
+@if (error()) {
+  <p class="error">{{ error() }}</p>
+}
+
+<div class="hh-panel table-panel">
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Code</th>
+          <th>Name</th>
+          <th>Description</th>
+          <th>Status</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (level of levels(); track level.id) {
+          <tr>
+            @if (editingId() === level.id) {
+              <td><code>{{ level.code }}</code></td>
+              <td><input [formControl]="name" /></td>
+              <td><input [formControl]="description" /></td>
+              <td>
+                <label class="check">
+                  <input type="checkbox" [formControl]="active" [disabled]="level.code === 'RETAIL'" />
+                  Active
+                </label>
+              </td>
+              <td class="actions">
+                <button type="button" (click)="save(level)">Save</button>
+                <button type="button" class="ghost" (click)="cancelEdit()">Cancel</button>
+              </td>
+            } @else {
+              <td><code>{{ level.code }}</code></td>
+              <td>{{ level.name }}</td>
+              <td>{{ level.description || '—' }}</td>
+              <td>
+                <span class="status" [class.on]="level.active" [class.off]="!level.active">
+                  {{ level.active ? 'Active' : 'Inactive' }}
+                </span>
+              </td>
+              <td class="actions">
+                <button type="button" (click)="startEdit(level)">Edit</button>
+              </td>
+            }
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+</div>

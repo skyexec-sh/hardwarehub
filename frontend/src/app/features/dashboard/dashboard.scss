@@ -1,0 +1,47 @@
+.panels {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  gap: 1rem;
+}
+
+.hh-panel h3 {
+  margin-bottom: 0.55rem;
+  font-size: 1rem;
+}
+
+.hh-panel p,
+.hh-panel li {
+  color: #666;
+  margin: 0;
+}
+
+.hh-stat-card .value a {
+  color: inherit;
+  text-decoration: none;
+  font-weight: inherit;
+}
+
+.hh-stat-card .value a:hover {
+  text-decoration: underline;
+}
+
+.hh-stat-card .sub {
+  margin-top: 0.2rem;
+  font-size: 0.78rem;
+  color: #777;
+  font-weight: 600;
+}
+
+
+.hh-panel ul {
+  margin: 0;
+  padding-left: 1.1rem;
+  display: grid;
+  gap: 0.35rem;
+}
+
+@media (max-width: 900px) {
+  .panels {
+    grid-template-columns: 1fr;
+  }
+}

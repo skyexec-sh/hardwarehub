@@ -1,0 +1,194 @@
+@if (error() && !order()) {
+  <div class="hh-panel"><p class="error">{{ error() }}</p><a routerLink="/fulfillment/orders">Back to orders</a></div>
+} @else if (order(); as o) {
+  <div class="toolbar">
+    <a routerLink="/fulfillment/orders" class="ghost">Back</a>
+    @if (canCancel()) {
+      <button type="button" class="ghost" style="border:none;cursor:pointer" (click)="cancelOrder()">Cancel order</button>
+    }
+  </div>
+
+  @if (error()) {
+    <p class="error">{{ error() }}</p>
+  }
+
+  <div class="panels-stack">
+    <section class="hh-panel">
+      <h2 class="section-title">Sales order {{ o.soNumber }}</h2>
+      <div class="meta-grid">
+        <div>
+          <div class="label">Customer</div>
+          <div class="value">{{ o.customerName }}</div>
+        </div>
+        <div>
+          <div class="label">Status</div>
+          <div class="value">{{ statusLabel(o.status) }}</div>
+        </div>
+        <div>
+          <div class="label">Quote</div>
+          <div class="value">
+            @if (o.quotationId) {
+              <a [routerLink]="['/fulfillment/quotes', o.quotationId]">{{ o.quoteNumber }}</a>
+            } @else {
+              —
+            }
+          </div>
+        </div>
+        <div>
+          <div class="label">Total</div>
+          <div class="value">{{ o.totalAmount | currency: 'PHP':'symbol-narrow':'1.2-2' }}</div>
+        </div>
+        <div>
+          <div class="label">Created</div>
+          <div class="value">{{ o.createdAt | date: 'medium' }}</div>
+        </div>
+      </div>
+
+      <h3 class="section-title">Line items</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Product</th>
+              <th class="num">Ordered</th>
+              <th class="num">Delivered</th>
+              <th class="num">Open</th>
+              <th class="num">Invoiced</th>
+              <th class="num">Billable</th>
+              <th class="num">Unit price</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (item of o.items; track item.id) {
+              <tr>
+                <td>{{ lineLabel(item) }}</td>
+                <td class="num">{{ item.quantityOrdered }}</td>
+                <td class="num">{{ item.quantityDelivered }}</td>
+                <td class="num">{{ item.quantityOpen }}</td>
+                <td class="num">{{ item.quantityInvoiced }}</td>
+                <td class="num">{{ item.quantityBillable }}</td>
+                <td class="num">{{ item.unitPrice | currency: 'PHP':'symbol-narrow':'1.2-2' }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    @if (o.deliveries.length || o.invoices.length) {
+      <section class="hh-panel">
+        <h3 class="section-title">Related documents</h3>
+        @if (o.deliveries.length) {
+          <p><strong>Delivery receipts:</strong></p>
+          <div class="doc-links">
+            @for (d of o.deliveries; track d.id) {
+              <a [routerLink]="['/fulfillment/deliveries', d.id]">{{ d.drNumber }}</a>
+            }
+          </div>
+        }
+        @if (o.invoices.length) {
+          <p><strong>Invoices:</strong></p>
+          <div class="doc-links">
+            @for (inv of o.invoices; track inv.id) {
+              <a [routerLink]="['/fulfillment/invoices', inv.id]">{{ inv.invoiceNumber }}</a>
+            }
+          </div>
+        }
+      </section>
+    }
+
+    @if (hasOpenLines() && o.status !== 'CANCELLED') {
+      <section class="hh-panel">
+        <h3 class="section-title">Post partial delivery</h3>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Product</th>
+                <th class="num">Open qty</th>
+                <th>Deliver now</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (row of deliveryRows(); track row.salesOrderItemId) {
+                <tr>
+                  <td>{{ row.productSku }} — {{ row.productName }}</td>
+                  <td class="num">{{ row.quantityOpen }}</td>
+                  <td>
+                    <input
+                      class="qty-input"
+                      type="number"
+                      step="0.001"
+                      min="0"
+                      [max]="row.quantityOpen"
+                      [value]="row.deliverQty"
+                      (change)="setDeliverQty(row.salesOrderItemId, $any($event.target).value)"
+                    />
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+        <div class="form-grid" style="margin-top:0.75rem">
+          <div style="grid-column:1/-1">
+            <label>Delivery notes</label>
+            <textarea [formControl]="deliveryNotes" rows="2"></textarea>
+          </div>
+        </div>
+        <div class="btn-row">
+          <button type="button" [disabled]="savingDelivery()" (click)="postDelivery()">
+            {{ savingDelivery() ? 'Posting…' : 'Post delivery' }}
+          </button>
+        </div>
+      </section>
+    }
+
+    @if (hasBillableLines() && o.status !== 'CANCELLED') {
+      <section class="hh-panel">
+        <h3 class="section-title">Create invoice</h3>
+        @if (!showInvoiceForm()) {
+          <div class="btn-row">
+            <button type="button" class="secondary" (click)="toggleInvoiceForm()">Show invoice form</button>
+          </div>
+        } @else {
+          <form [formGroup]="invoiceForm" (ngSubmit)="createInvoice()">
+            <div class="form-grid">
+              <div>
+                <label>Payment method</label>
+                <select formControlName="paymentMethod">
+                  <option value="CASH">Cash</option>
+                  <option value="CARD">Card</option>
+                  <option value="CREDIT">Credit</option>
+                </select>
+              </div>
+              <div>
+                <label>Discount</label>
+                <input type="number" step="0.01" formControlName="discountAmount" />
+              </div>
+              <div>
+                <label>Tax</label>
+                <input type="number" step="0.01" formControlName="taxAmount" />
+              </div>
+              <div style="grid-column:1/-1">
+                <label>Notes</label>
+                <textarea formControlName="notes" rows="2"></textarea>
+              </div>
+            </div>
+            <p class="page-subtitle" style="margin:0 0 0.75rem">
+              Invoices all delivered-but-uninvoiced quantities on this order.
+            </p>
+            <div class="btn-row">
+              <button type="submit" [disabled]="savingInvoice()">
+                {{ savingInvoice() ? 'Creating…' : 'Create invoice' }}
+              </button>
+              <button type="button" class="secondary" (click)="toggleInvoiceForm()">Cancel</button>
+            </div>
+          </form>
+        }
+      </section>
+    }
+  </div>
+} @else {
+  <div class="hh-panel"><p>Loading sales order…</p></div>
+}

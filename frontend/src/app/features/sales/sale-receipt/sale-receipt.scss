@@ -1,0 +1,282 @@
+.toolbar {
+  display: flex;
+  gap: 0.65rem;
+  margin-bottom: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.ghost {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.55rem 0.9rem;
+  border-radius: 6px;
+  background: #f3f3f3;
+  color: #444;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.print-btn {
+  border: none;
+  border-radius: 6px;
+  padding: 0.55rem 0.95rem;
+  font: inherit;
+  font-weight: 700;
+  color: #fff;
+  cursor: pointer;
+  background: linear-gradient(90deg, #1dc7ea, #1f77d0);
+  margin-left: auto;
+}
+
+.print-hint {
+  color: #777;
+  font-size: 0.85rem;
+  margin: 0 0 1rem;
+}
+
+.error {
+  color: #c0392b;
+}
+
+.invoice {
+  max-width: 780px;
+  margin: 0 auto 2rem;
+  background: #fff;
+  color: #111;
+  border: 1.5px solid #222;
+  padding: 1.25rem 1.35rem 1rem;
+  font-family: 'Times New Roman', Times, Georgia, serif;
+  font-size: 13px;
+  line-height: 1.35;
+}
+
+.invoice-header {
+  text-align: center;
+  margin-bottom: 0.85rem;
+  border-bottom: 1.5px solid #222;
+  padding-bottom: 0.75rem;
+}
+
+.business-name {
+  font-size: 1.55rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.tagline,
+.address,
+.prop,
+.tin,
+.contact {
+  font-size: 0.82rem;
+}
+
+.prop {
+  font-weight: 700;
+  margin-top: 0.15rem;
+}
+
+.doc-title-wrap {
+  margin-top: 0.65rem;
+}
+
+.doc-title {
+  display: inline-block;
+  border: 2px solid #222;
+  padding: 0.2rem 1.1rem;
+  font-size: 1.05rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+}
+
+.receipt-no {
+  margin-top: 0.45rem;
+  font-weight: 700;
+  color: #8b1e1e;
+  font-size: 0.95rem;
+}
+
+.party-grid {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  gap: 0.35rem 1rem;
+  margin-bottom: 0.85rem;
+}
+
+.field {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.35rem;
+  align-items: end;
+  min-height: 1.35rem;
+}
+
+.field.full {
+  grid-column: 1 / -1;
+}
+
+.field .label {
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.field .value {
+  border-bottom: 1px solid #333;
+  min-height: 1.1rem;
+  padding: 0 0.2rem 0.05rem;
+}
+
+.items {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+  margin-bottom: 0.75rem;
+}
+
+.items th,
+.items td {
+  border: 1px solid #222;
+  padding: 0.28rem 0.35rem;
+  vertical-align: top;
+  height: 1.55rem;
+}
+
+.items th {
+  font-size: 0.78rem;
+  letter-spacing: 0.03em;
+  background: #f3f3f3;
+  text-align: center;
+}
+
+.col-qty { width: 9%; }
+.col-unit { width: 10%; }
+.col-item { width: 43%; }
+.col-price { width: 18%; }
+.col-amt { width: 20%; }
+
+.num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.article {
+  font-weight: 600;
+}
+
+.sku {
+  font-size: 0.75rem;
+  color: #555;
+  font-family: Consolas, 'Courier New', monospace;
+}
+
+.label-cell {
+  text-align: right;
+  font-weight: 700;
+  padding-right: 0.6rem !important;
+}
+
+.total-row .total-amt {
+  font-weight: 800;
+  font-size: 1.05rem;
+}
+
+.cash-meta {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1.25rem;
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
+}
+
+.notes {
+  margin: 0.35rem 0 0.75rem;
+  font-style: italic;
+}
+
+.sign-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+  margin: 1.35rem 0 1rem;
+}
+
+.sign-box {
+  text-align: center;
+  font-size: 0.85rem;
+}
+
+.sign-box.right {
+  justify-self: end;
+  width: 100%;
+}
+
+.sign-name {
+  min-height: 1.25rem;
+  font-weight: 700;
+  line-height: 1.2;
+  margin-bottom: 0.15rem;
+}
+
+.sign-box .line {
+  border-bottom: 1px solid #222;
+  margin-bottom: 0.35rem;
+}
+
+.sign-label {
+  font-size: 0.82rem;
+}
+
+.muted {
+  color: #555;
+  font-size: 0.8rem;
+  margin-top: 0.15rem;
+}
+
+.legal {
+  text-align: center;
+  border-top: 1px solid #222;
+  padding-top: 0.65rem;
+  font-size: 0.78rem;
+}
+
+.legal p {
+  margin: 0.2rem 0;
+}
+
+.legal .bold {
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.legal .small {
+  font-size: 0.72rem;
+  text-decoration: underline;
+}
+
+.legal .eoe {
+  margin-top: 0.45rem;
+  font-style: italic;
+}
+
+@media (max-width: 700px) {
+  .party-grid,
+  .sign-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media print {
+  .no-print {
+    display: none !important;
+  }
+
+  .invoice {
+    max-width: none;
+    margin: 0;
+    border-width: 1px;
+    padding: 0;
+    box-shadow: none;
+  }
+}

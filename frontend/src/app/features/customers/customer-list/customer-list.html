@@ -1,0 +1,86 @@
+<div class="header">
+  <p class="page-subtitle" style="margin:0">
+    Manage walk-in and credit customers. Record payments and print SOA from Account.
+  </p>
+  <a class="create-btn" routerLink="/customers/new">+ Add customer</a>
+</div>
+
+<div class="hh-panel table-panel">
+  <div class="filters-toolbar">
+    <button type="button" class="clear-filters" (click)="clearFilters()">Clear filters</button>
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Code</th>
+          <th>Business</th>
+          <th>Contact</th>
+          <th>Phone</th>
+          <th>City</th>
+          <th>Credit / Balance</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+        <tr class="col-filters">
+          <th><input [formControl]="code" placeholder="Code" /></th>
+          <th><input [formControl]="businessName" placeholder="Business" /></th>
+          <th><input [formControl]="contact" placeholder="Contact" /></th>
+          <th><input [formControl]="phone" placeholder="Phone" /></th>
+          <th><input [formControl]="city" placeholder="City" /></th>
+          <th>
+            <select [formControl]="balanceDue">
+              <option value="">All</option>
+              <option value="1">Has balance due</option>
+            </select>
+          </th>
+          <th>
+            <select [formControl]="status">
+              <option value="">All</option>
+              <option value="ACTIVE">Active</option>
+              <option value="INACTIVE">Inactive</option>
+              <option value="ON_HOLD">On hold</option>
+            </select>
+          </th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (item of items(); track item.id) {
+          <tr>
+            <td>{{ item.customerCode }}</td>
+            <td>{{ item.businessName }}</td>
+            <td>{{ item.contactPerson || '—' }}</td>
+            <td>{{ item.phone || '—' }}</td>
+            <td>{{ item.city || '—' }}</td>
+            <td>
+              <div>Limit: ₱{{ item.creditLimit }}</div>
+              <div class="balance" [class.due]="item.outstandingBalance > 0">
+                Due: ₱{{ item.outstandingBalance }}
+              </div>
+            </td>
+            <td>
+              <span class="status" [class.on]="item.status === 'ACTIVE'" [class.off]="item.status !== 'ACTIVE'">
+                {{ item.status }}
+              </span>
+            </td>
+            <td class="actions">
+              <a [routerLink]="['/customers', item.id]">Edit</a>
+              <a [routerLink]="['/customers', item.id, 'history']">Account</a>
+              @if (item.status !== 'ACTIVE') {
+                <button type="button" (click)="setStatus(item, 'ACTIVE')">Activate</button>
+              }
+              @if (item.status === 'ACTIVE') {
+                <button type="button" (click)="setStatus(item, 'ON_HOLD')">Hold</button>
+              }
+              <button type="button" (click)="remove(item)">Delete</button>
+            </td>
+          </tr>
+        } @empty {
+          <tr><td colspan="8" class="empty">No customers match these filters</td></tr>
+        }
+      </tbody>
+    </table>
+  </div>
+</div>

@@ -1,0 +1,52 @@
+<div class="hh-panel form-panel">
+  <h2>{{ isEdit() ? 'Edit user' : 'Create user' }}</h2>
+  <p class="page-subtitle">Assign roles carefully — OWNER and ADMIN can manage other users.</p>
+
+  <form [formGroup]="form" (ngSubmit)="submit()" class="form">
+    <label>
+      Username
+      <input formControlName="username" />
+    </label>
+    <label>
+      Email
+      <input type="email" formControlName="email" />
+    </label>
+    @if (!isEdit()) {
+      <label>
+        Password
+        <input type="password" formControlName="password" />
+      </label>
+    }
+    <div class="row">
+      <label>
+        First name
+        <input formControlName="firstName" />
+      </label>
+      <label>
+        Last name
+        <input formControlName="lastName" />
+      </label>
+    </div>
+    <label>
+      Phone
+      <input formControlName="phone" />
+    </label>
+    <label>
+      Roles
+      <select formControlName="roles" multiple>
+        @for (role of roles; track role) {
+          <option [value]="role">{{ role }}</option>
+        }
+      </select>
+    </label>
+
+    @if (error()) {
+      <p class="error">{{ error() }}</p>
+    }
+
+    <div class="actions">
+      <a routerLink="/users" class="ghost">Cancel</a>
+      <button type="submit" class="save">Save</button>
+    </div>
+  </form>
+</div>

@@ -1,0 +1,147 @@
+<div class="toolbar">
+  <a routerLink="/fulfillment/quotes" class="ghost">Back to quotes</a>
+  <button type="button" class="save-btn" [disabled]="saving()" (click)="save()">
+    {{ saving() ? 'Saving…' : (isEdit() ? 'Update draft' : 'Save draft') }}
+  </button>
+</div>
+
+@if (error()) {
+  <p class="error">{{ error() }}</p>
+}
+
+<section class="hh-panel quote-form-panel">
+  <header class="panel-head">
+    <h2>{{ isEdit() ? 'Edit quotation' : 'New quotation' }}</h2>
+    <p class="hint">Select a customer, add products, then save as draft.</p>
+  </header>
+
+  <div class="meta-grid">
+    <div class="field customer">
+      <label for="quote-customer">Customer</label>
+      <select id="quote-customer" [formControl]="customerId">
+        <option value="">Select customer…</option>
+        @for (c of customers(); track c.id) {
+          <option [value]="c.id">{{ c.businessName }} ({{ c.customerCode }})</option>
+        }
+      </select>
+    </div>
+    <div class="field">
+      <label for="quote-valid">Valid until</label>
+      <input id="quote-valid" type="date" [formControl]="validUntil" />
+    </div>
+    <div class="field">
+      <label for="quote-discount">Discount</label>
+      <input id="quote-discount" type="number" step="0.01" min="0" [formControl]="discountAmount" />
+    </div>
+    <div class="field">
+      <label for="quote-tax">Tax</label>
+      <input id="quote-tax" type="number" step="0.01" min="0" [formControl]="taxAmount" />
+    </div>
+    <div class="field notes">
+      <label for="quote-notes">Notes</label>
+      <textarea id="quote-notes" [formControl]="notes" rows="2" placeholder="Optional notes for the customer"></textarea>
+    </div>
+  </div>
+
+  <div class="lines-block">
+    <div class="lines-head">
+      <h3>Line items</h3>
+      <div class="product-search">
+        <input
+          class="search"
+          [formControl]="productSearch"
+          placeholder="Search SKU or product name…"
+          (keydown.enter)="$event.preventDefault(); searchProducts()"
+        />
+        <button type="button" class="ghost-btn" (click)="searchProducts()">Search</button>
+      </div>
+    </div>
+
+    @if (searchHits().length) {
+      <ul class="hits">
+        @for (p of searchHits(); track p.id) {
+          <li>
+            <button type="button" (click)="addProduct(p)">
+              <span class="hit-main">
+                <strong>{{ p.sku }}</strong> — {{ p.name }}
+              </span>
+              <span class="hit-meta">
+                {{ p.sellingPrice | currency: 'PHP':'symbol-narrow':'1.2-2' }}
+                · stock {{ p.currentStock }}
+              </span>
+            </button>
+          </li>
+        }
+      </ul>
+    }
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Item</th>
+            <th class="num">Qty</th>
+            <th class="num">Price</th>
+            <th class="num">Disc.</th>
+            <th class="num">Line</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (line of lines(); track line.productId) {
+            <tr>
+              <td>
+                <div class="sku">{{ line.sku }}</div>
+                <div class="name">{{ line.name }}</div>
+              </td>
+              <td>
+                <input
+                  class="qty"
+                  type="number"
+                  step="0.001"
+                  [value]="line.quantity"
+                  (change)="setQty(line.productId, $any($event.target).value)"
+                />
+              </td>
+              <td>
+                <input
+                  class="qty"
+                  type="number"
+                  step="0.01"
+                  [value]="line.unitPrice"
+                  (change)="setUnitPrice(line.productId, $any($event.target).value)"
+                />
+              </td>
+              <td>
+                <input
+                  class="qty"
+                  type="number"
+                  step="0.01"
+                  [value]="line.lineDiscount"
+                  (change)="setLineDiscount(line.productId, $any($event.target).value)"
+                />
+              </td>
+              <td class="num">
+                {{ line.quantity * line.unitPrice - line.lineDiscount | currency: 'PHP':'symbol-narrow':'1.2-2' }}
+              </td>
+              <td>
+                <button type="button" class="linkish" (click)="removeLine(line.productId)">Remove</button>
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="6" class="empty">Search above and add products to this quotation</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="totals">
+    <div class="row"><span>Subtotal</span><span>{{ subtotal() | currency: 'PHP':'symbol-narrow':'1.2-2' }}</span></div>
+    <div class="row"><span>Discount</span><span>{{ discountAmount.value | currency: 'PHP':'symbol-narrow':'1.2-2' }}</span></div>
+    <div class="row"><span>Tax</span><span>{{ taxAmount.value | currency: 'PHP':'symbol-narrow':'1.2-2' }}</span></div>
+    <div class="row grand"><span>Total</span><span>{{ total() | currency: 'PHP':'symbol-narrow':'1.2-2' }}</span></div>
+  </div>
+</section>

@@ -1,0 +1,129 @@
+<div class="hh-panel form-panel">
+  <h2>Record inventory movement</h2>
+  <p class="page-subtitle">{{ quantityHint() }}</p>
+
+  <form [formGroup]="form" (ngSubmit)="submit()" class="form">
+    <label>
+      Movement type
+      <select formControlName="transactionType">
+        @for (t of types; track t) {
+          <option [value]="t">{{ t === 'STOCK_IN' ? 'Stock in' : t === 'STOCK_OUT' ? 'Stock out' : 'Adjustment' }}</option>
+        }
+      </select>
+    </label>
+
+    <section class="picker">
+      <h3>Add products</h3>
+      <div class="scan-row">
+        <input
+          class="search"
+          [formControl]="barcode"
+          placeholder="Scan barcode and press Enter"
+          (keydown.enter)="$event.preventDefault(); lookupBarcode()"
+        />
+        <button type="button" class="ghost-btn" (click)="lookupBarcode()">Scan</button>
+      </div>
+      <div class="scan-row">
+        <input
+          class="search"
+          [formControl]="productSearch"
+          placeholder="Search SKU or product name..."
+          (keydown.enter)="$event.preventDefault(); searchProducts()"
+        />
+        <button type="button" class="ghost-btn" (click)="searchProducts()">Search</button>
+      </div>
+
+      @if (searchHits().length) {
+        <ul class="hits">
+          @for (p of searchHits(); track p.id) {
+            <li>
+              <button type="button" (click)="addProduct(p)">
+                <strong>{{ p.sku }}</strong> — {{ p.name }}
+                <span>stock {{ p.currentStock }} {{ p.unit }}</span>
+              </button>
+            </li>
+          }
+        </ul>
+      }
+    </section>
+
+    <section class="lines">
+      <div class="lines-header">
+        <h3>Movement lines</h3>
+        <span class="count">{{ lines().length }} product{{ lines().length === 1 ? '' : 's' }}</span>
+      </div>
+
+      @if (!lines().length) {
+        <p class="empty">No products yet. Search or scan to add one or more.</p>
+      } @else {
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Product</th>
+                <th>Stock</th>
+                <th>Quantity</th>
+                <th>Unit cost</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (line of lines(); track line.productId) {
+                <tr>
+                  <td>
+                    <div class="sku">{{ line.sku }}</div>
+                    <div class="name">{{ line.name }}</div>
+                  </td>
+                  <td>{{ line.stock }} {{ line.unit }}</td>
+                  <td>
+                    <input
+                      class="qty"
+                      type="number"
+                      step="0.001"
+                      [value]="line.quantity"
+                      (change)="setQty(line.productId, $any($event.target).value)"
+                    />
+                  </td>
+                  <td>
+                    <input
+                      class="qty"
+                      type="number"
+                      step="0.01"
+                      [value]="line.unitCost ?? ''"
+                      (change)="setUnitCost(line.productId, $any($event.target).value)"
+                      placeholder="Optional"
+                    />
+                  </td>
+                  <td>
+                    <button type="button" class="link-btn" (click)="removeLine(line.productId)">Remove</button>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </section>
+
+    <label>
+      Reference no.
+      <input formControlName="referenceNo" placeholder="PO / DO / ticket #" />
+    </label>
+
+    <label>
+      Notes
+      <input formControlName="notes" />
+    </label>
+
+    @if (error()) {
+      <p class="error">{{ error() }}</p>
+    }
+
+    <div class="actions">
+      <a routerLink="/inventory" class="ghost">Cancel</a>
+      <button type="submit" class="save" [disabled]="saving()">
+        {{ saving() ? 'Saving…' : lines().length > 1 ? 'Save movements' : 'Save movement' }}
+      </button>
+    </div>
+  </form>
+</div>

@@ -1,0 +1,53 @@
+@use '../users/user-list/user-list.scss';
+
+.filters-toolbar {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--hh-border);
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.clear-filters {
+  border: 1px solid #d9d9d9;
+  background: #fff;
+  border-radius: 6px;
+  padding: 0.45rem 0.75rem;
+  font: inherit;
+  cursor: pointer;
+}
+
+.col-filters input,
+.col-filters select {
+  width: 100%;
+  border: 1px solid #d9d9d9;
+  border-radius: 4px;
+  padding: 0.35rem 0.45rem;
+  font: inherit;
+  font-size: 0.82rem;
+}
+
+.status-chip {
+  font-weight: 700;
+  font-size: 0.82rem;
+  letter-spacing: 0.01em;
+}
+
+.status-chip.draft { color: #777; }
+.status-chip.sent { color: #1f77d0; }
+.status-chip.accepted { color: #5ea000; }
+.status-chip.rejected { color: #c0392b; }
+.status-chip.converted { color: #8e44ad; }
+.status-chip.cancelled { color: #999; }
+.status-chip.open { color: #1f77d0; }
+.status-chip.partially_delivered { color: #e67e22; }
+.status-chip.fully_delivered { color: #5ea000; }
+.status-chip.partially_paid { color: #e67e22; }
+.status-chip.paid { color: #5ea000; }
+.status-chip.voided { color: #c0392b; }
+
+.error {
+  color: #c0392b;
+  padding: 0 1rem;
+}
